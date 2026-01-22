@@ -64,7 +64,8 @@ export default function Typebox({ value, onChange, onSave }: TypeboxProps) {
 
       <button
         onClick={handleSave}
-        className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-white h-12 rounded-lg"
+        type="submit"
+        className="w-full mt-4 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#053F53] to-[#0470949f] py-3 text-sm font-medium text-white hover:opacity-90 transition"
       >
         Save
       </button>

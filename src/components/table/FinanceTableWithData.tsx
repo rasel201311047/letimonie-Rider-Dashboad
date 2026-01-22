@@ -628,7 +628,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
                   onClick={() => goToPage(page)}
                   className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
                     currentPage === page
-                      ? "z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                      ? "z-10 bg-[#053D51] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                       : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
                   }`}
                 >
@@ -718,7 +718,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
                 placeholder="Search by name, email, or transaction ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg sm:text-sm"
               />
             </div>
           </div>
@@ -728,7 +728,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg  sm:text-sm"
             >
               {dateOptions.map((option) => (
                 <option key={option} value={option}>
@@ -743,7 +743,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 sm:text-sm"
             >
               {statusOptions.map((status) => (
                 <option key={status} value={status}>
@@ -758,7 +758,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
             <select
               value={planFilter}
               onChange={(e) => setPlanFilter(e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg  sm:text-sm"
             >
               {planOptions.map((plan) => (
                 <option key={plan} value={plan}>
@@ -780,7 +780,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
                 type="date"
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2  sm:text-sm"
               />
             </div>
             <div>
@@ -791,7 +791,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
                 type="date"
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2sm:text-sm"
               />
             </div>
             <div className="flex items-end">
@@ -800,7 +800,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
                   setCustomStartDate("");
                   setCustomEndDate("");
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none "
               >
                 Clear Dates
               </button>
@@ -815,7 +815,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
             <select
               value={itemsPerPage}
               onChange={(e) => setItemsPerPage(Number(e.target.value))}
-              className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="border border-gray-300 rounded-lg px-3 py-1 text-sm  "
             >
               {pageSizes.map((size) => (
                 <option key={size} value={size}>
@@ -920,7 +920,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
                         {payment.paymentTime}
                       </span>
                       {payment.nextBillingDate && (
-                        <span className="text-blue-600 text-xs mt-1">
+                        <span className="text-[#053D51] text-xs mt-1">
                           Renews: {payment.nextBillingDate}
                         </span>
                       )}

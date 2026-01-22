@@ -19,6 +19,7 @@ import {
   Flag,
   MessagesSquare,
   UsersRound,
+  Orbit,
 } from "lucide-react";
 import type { NavItem } from "../../types";
 import { useDispatch, useSelector } from "react-redux";
@@ -33,11 +34,11 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
   const dispatch = useDispatch();
 
   const routeName = useSelector(
-    (state: RootState) => state.globaldata.routeName
+    (state: RootState) => state.globaldata.routeName,
   );
 
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
 
   const toggleDropdown = (id: string) => {
@@ -57,6 +58,9 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
         return <Car size={20} />;
       case "business":
         return <Briefcase size={20} />;
+      case "PlanExtraction":
+        return <Orbit size={20} />;
+
       case "chat":
         return <MessagesSquare size={20} />;
       case "referrals":

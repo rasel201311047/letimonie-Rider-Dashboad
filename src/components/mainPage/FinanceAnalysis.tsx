@@ -2,6 +2,7 @@ import React from "react";
 import UserGrowthGraph from "../cardcomponent/UserGrowthGraph";
 import MetricCard from "../cardcomponent/MetricCard";
 import FinanceTableWithData from "../table/FinanceTableWithData";
+import RevenueGraph from "../cardcomponent/RevenueGraph";
 
 export default function FinanceAnalysis() {
   const metrics = [
@@ -80,10 +81,7 @@ export default function FinanceAnalysis() {
           />
         ))}
       </div>
-      <UserGrowthGraph
-        rawDataByYear={rawDataByYear}
-        graphtext={"User growth"}
-      />
+      <RevenueGraph rawDataByYear={rawDataByYear} graphtext={"Total Revenue"} />
 
       <FinanceTableWithData />
     </div>

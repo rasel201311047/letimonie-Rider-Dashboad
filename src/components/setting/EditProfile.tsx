@@ -113,7 +113,7 @@ export default function EditProfile() {
 
             <button
               onClick={handleProfileSave}
-              className="w-full bg-gradient-to-r from-[#0F172A] to-[#1E293B] text-white py-2.5 rounded-md text-sm font-medium hover:opacity-90"
+              className="w-full bg-gradient-to-r from-[#053F53] to-[#0470949f] text-white py-2.5 rounded-md text-sm font-medium hover:opacity-90"
             >
               Save Changes
             </button>
@@ -177,7 +177,7 @@ export default function EditProfile() {
 
             <button
               onClick={handlePasswordSave}
-              className="w-full bg-gradient-to-r from-[#0F172A] to-[#1E293B] text-white py-2.5 rounded-md text-sm font-medium hover:opacity-90"
+              className="w-full bg-gradient-to-r from-[#053F53] to-[#0470949f] text-white py-2.5 rounded-md text-sm font-medium hover:opacity-90"
             >
               Update Password
             </button>

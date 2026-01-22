@@ -3,8 +3,6 @@ import {
   Search,
   Filter,
   Download,
-  Eye,
-  MoreVertical,
   CheckCircle,
   Clock,
   XCircle,
@@ -19,10 +17,6 @@ import {
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
-// Install required packages:
-// npm install html2canvas jspdf
-
-// Mock data for demonstration
 const mockRides = [
   {
     id: "RIDE-001",
@@ -180,7 +174,6 @@ export default function RidesPage() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [rides] = useState(mockRides);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showDropdown, setShowDropdown] = useState<string | null>(null);
   const [exportType, setExportType] = useState<"all" | "filtered">("filtered");
   const [showExportOptions, setShowExportOptions] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -430,34 +423,9 @@ export default function RidesPage() {
     alert(`Viewing details for ${rideId}`);
   };
 
-  const handleMoreOptions = (rideId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setShowDropdown(showDropdown === rideId ? null : rideId);
-  };
-
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-    }
-  };
-
-  const handleRideAction = (action: string, rideId: string) => {
-    setShowDropdown(null);
-    switch (action) {
-      case "edit":
-        alert(`Editing ride: ${rideId}`);
-        break;
-      case "cancel":
-        if (confirm(`Are you sure you want to cancel ride ${rideId}?`)) {
-          alert(`Ride ${rideId} cancelled`);
-        }
-        break;
-      case "contact":
-        alert(`Contacting parties for ride: ${rideId}`);
-        break;
-      case "receipt":
-        alert(`Generating receipt for ride: ${rideId}`);
-        break;
     }
   };
 
@@ -485,7 +453,7 @@ export default function RidesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+      <div className=" mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 font-['Inter']">
@@ -507,7 +475,7 @@ export default function RidesPage() {
                 </p>
               </div>
               <div className="bg-blue-50 p-3 rounded-lg">
-                <Car className="w-6 h-6 text-blue-600" />
+                <Car className="w-6 h-6 text-[#053F53]" />
               </div>
             </div>
             <p className="text-xs text-green-600 mt-2">+12% from last month</p>
@@ -658,7 +626,7 @@ export default function RidesPage() {
                               id="all"
                               checked={exportType === "all"}
                               onChange={() => setExportType("all")}
-                              className="text-blue-600"
+                              className="text-[#053F53]"
                             />
                             <label
                               htmlFor="all"
@@ -715,9 +683,6 @@ export default function RidesPage() {
                   <th className="py-4 px-6 text-left text-xs font-semibold font-['Inter'] text-gray-700 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="py-4 px-6 text-left text-xs font-semibold font-['Inter'] text-gray-700 uppercase tracking-wider">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -735,7 +700,7 @@ export default function RidesPage() {
                     <td className="py-4 px-6 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <User className="w-4 h-4 text-blue-600" />
+                          <User className="w-4 h-4 text-[#053F53]" />
                         </div>
                         <div className="ml-3">
                           <div className="font-medium text-gray-900">
@@ -767,7 +732,7 @@ export default function RidesPage() {
                     <td className="py-4 px-6">
                       <div className="space-y-1">
                         <div className="flex items-start">
-                          <MapPin className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <MapPin className="w-4 h-4 text-[#053F53] mr-2 mt-0.5 flex-shrink-0" />
                           <span className="text-sm text-gray-900">
                             From: {ride.pickup}
                           </span>
@@ -794,69 +759,6 @@ export default function RidesPage() {
 
                     <td className="py-4 px-6 whitespace-nowrap">
                       {getStatusBadge(ride.status as keyof typeof statusConfig)}
-                    </td>
-
-                    <td className="py-4 px-6 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewDetails(ride.id);
-                          }}
-                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors hover:shadow-sm active:scale-95"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4 text-gray-600" />
-                        </button>
-                        <div className="relative">
-                          <button
-                            onClick={(e) => handleMoreOptions(ride.id, e)}
-                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors hover:shadow-sm active:scale-95"
-                            title="More Options"
-                          >
-                            <MoreVertical className="w-4 h-4 text-gray-600" />
-                          </button>
-
-                          {showDropdown === ride.id && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                              <div className="py-1">
-                                <button
-                                  onClick={() =>
-                                    handleRideAction("edit", ride.id)
-                                  }
-                                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                  Edit Ride
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleRideAction("cancel", ride.id)
-                                  }
-                                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                  Cancel Ride
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleRideAction("contact", ride.id)
-                                  }
-                                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                  Contact Parties
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleRideAction("receipt", ride.id)
-                                  }
-                                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                  Generate Receipt
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -896,7 +798,7 @@ export default function RidesPage() {
                       onClick={() => handlePageChange(page)}
                       className={`px-3 py-1.5 min-w-[40px] rounded-lg text-sm font-medium transition-colors ${
                         currentPage === page
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          ? "bg-[#053F53] text-white hover:bg-[#053F53]"
                           : "border border-gray-300 hover:bg-gray-50 hover:shadow-sm"
                       } active:scale-95`}
                     >

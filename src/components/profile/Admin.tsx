@@ -1,13 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Bell, Grid, MessageCircleMore } from "lucide-react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../rtkquery/store";
 
 export default function Admin() {
   const routeName = useSelector(
-    (state: RootState) => state.globaldata.routeName
+    (state: RootState) => state.globaldata.routeName,
   );
+  const dispatch = useDispatch();
   console.log(routeName);
 
   const getTitle = (routeName: string) => {
@@ -17,8 +18,38 @@ export default function Admin() {
 
       case "users":
         return "Users Mangement";
+
+      case "rides":
+        return "Rides Mangement";
+      case "PlanExtraction":
+        return "Plan Extraction";
+
+      case "financial-analytics":
+        return "Financial Analytics";
+      case "notifications":
+        return "Notifications";
+      case "drivers":
+        return "Drivers Mangement";
+
+      case "editprofile":
+        return "Editprofile";
+
+      case "admin":
+        return "Admin List";
+
+      case "about":
+        return "About";
+
+      case "privacy":
+        return "Privacy";
+
+      case "terms":
+        return "Term & Condition";
       case "chat":
-        return "Support";
+        return "Help & Support";
+
+      case "ReportShowPage":
+        return "Report Mangement";
       default:
         return "Page";
     }
@@ -30,6 +61,34 @@ export default function Admin() {
         return "dashboad/default";
       case "users":
         return "users/mangement";
+      case "rides":
+        return "rides/show";
+      case "PlanExtraction":
+        return "Plan Extraction/mangement";
+
+      case "financial-analytics":
+        return "financial-analytics/mangement";
+      case "notifications":
+        return "notifications/send";
+      case "drivers":
+        return "drivers/mangement";
+
+      case "editprofile":
+        return "drivers/editprofile";
+      case "ReportShowPage":
+        return "report/mangement";
+      case "admin":
+        return "admin/mangement";
+
+      case "about":
+        return "about/mangement";
+
+      case "privacy":
+        return "privacy/mangement";
+
+      case "terms":
+        return "terms and condition/mangement";
+
       case "chat":
         return "Support/chat";
       default:
@@ -79,12 +138,12 @@ export default function Admin() {
               </span>
             </div>
 
-            <div className="relative cursor-pointer">
+            <Link to={"/NotificationShow"} className="relative cursor-pointer">
               <Bell size={24} />
               <span className="absolute -top-1 -right-1 bg-red-700 text-white text-[10px] w-4 h-4 flex justify-center items-center rounded-full">
                 3
               </span>
-            </div>
+            </Link>
           </div>
 
           {/* PROFILE */}

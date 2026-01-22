@@ -1,3 +1,4 @@
+import { User } from "lucide-react";
 import React, { useState, useMemo } from "react";
 
 const PAGE_SIZE = 5;
@@ -29,6 +30,7 @@ const initialRiders: Rider[] = [
   {
     id: "R-56",
     name: "Pierre Martin",
+    image: "",
     email: "pierre.m@email.com",
     phone: "+33 6 12 34 56 78",
     location: "Paris, France",
@@ -538,7 +540,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div className="flex items-center justify-between mt-6">
-      <div className="text-sm text-gray-500">
+      <div className="text-sm text-gray-500 mr-3">
         Page {currentPage} of {totalPages}
       </div>
       <div className="flex items-center gap-2">
@@ -578,7 +580,7 @@ const Pagination: React.FC<PaginationProps> = ({
                 onClick={() => onPageChange(page as number)}
                 className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                   currentPage === page
-                    ? "bg-gray-800 text-white"
+                    ? "bg-[#053F53] text-white"
                     : "border border-gray-300 hover:bg-gray-50 text-gray-700"
                 }`}
               >
@@ -1143,8 +1145,8 @@ export default function ProfessionalUsersTable() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                          {rider.name.charAt(0)}
+                        <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <User className="w-4 h-4 text-[#053F53]" />
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">

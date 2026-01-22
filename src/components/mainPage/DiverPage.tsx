@@ -310,7 +310,7 @@ const Pagination: React.FC<PaginationProps> = ({
   const visiblePages = getVisiblePages();
 
   return (
-    <div className="flex items-center justify-center gap-2 mt-6 text-sm">
+    <div className="flex items-center justify-end gap-2 mt-6 text-sm">
       <button
         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1}
@@ -329,9 +329,9 @@ const Pagination: React.FC<PaginationProps> = ({
             <button
               key={page}
               onClick={() => onPageChange(page as number)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                 currentPage === page
-                  ? "bg-[#0F172B] text-white shadow-sm"
+                  ? "bg-[#053F53] text-white shadow-sm"
                   : "hover:bg-gray-100 text-gray-700 border border-gray-200"
               }`}
             >

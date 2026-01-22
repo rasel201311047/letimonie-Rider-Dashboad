@@ -20,6 +20,7 @@ import PrivacyPolicy from "./components/setting/PrivacyPolicy";
 import TermsCondition from "./components/setting/TermsCondition";
 import Admin from "./components/setting/Admin";
 import PlanExpiration from "./components/mainPage/PlanExtraction";
+import NotificationShow from "./components/mainPage/NotificationShow";
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
           <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/ReportShowPage" element={<ReportShowPage />} />
           <Route path="/PlanExtraction" element={<PlanExpiration />} />
+          <Route path="/NotificationShow" element={<NotificationShow />} />
 
           <Route path="/settings/editprofile" element={<EditProfile />} />
           <Route path="/settings/admin" element={<Admin />} />

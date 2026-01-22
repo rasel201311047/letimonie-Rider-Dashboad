@@ -171,7 +171,7 @@ export default function ReportShowPage() {
                   <td className="py-4 px-6">
                     <button
                       onClick={() => setSelectedReport(report)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs"
+                      className="bg-[#053F53] text-white px-3 py-1 rounded hover:bg-[#293D53] text-xs"
                     >
                       Show
                     </button>

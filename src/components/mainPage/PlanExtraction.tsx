@@ -123,7 +123,7 @@ const PlanExtraction = () => {
 
   const filteredPlans = getFilteredPlans();
 
-  const sendReminder = (user, dateGroup = null) => {
+  const sendReminder = (user) => {
     const message = `Dear ${user.name},
 
 Your ${user.plan} plan is expiring on ${user.endDate}. Renew now to continue enjoying all the premium features without interruption.
@@ -240,7 +240,7 @@ Customer Success Team`;
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-teal-100 rounded-lg">
-              <CalendarDays className="w-6 h-6 text-teal-600" />
+              <CalendarDays className="w-6 h-6 text-[#053F53]" />
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
               Plan Expiration Management
@@ -291,12 +291,12 @@ Customer Success Team`;
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Recently Sent</p>
-              <p className="text-2xl font-bold text-teal-600">
+              <p className="text-2xl font-bold text-[#053F53]">
                 {sendLogs.length}
               </p>
             </div>
             <div className="p-2 bg-teal-50 rounded-lg">
-              <Send className="w-6 h-6 text-teal-600" />
+              <Send className="w-6 h-6 text-[#053F53]" />
             </div>
           </div>
         </div>
@@ -338,7 +338,7 @@ Customer Success Team`;
                   onClick={() => setSelectedFilter(filter.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
                     selectedFilter === filter.id
-                      ? "bg-teal-600 text-white shadow-md"
+                      ? "bg-[#053F53] text-white shadow-md"
                       : "bg-white text-gray-700 border border-gray-300 hover:border-teal-300"
                   }`}
                 >
@@ -371,7 +371,7 @@ Customer Success Team`;
                           filteredPlans.length > 0
                         }
                         onChange={selectAllUsers}
-                        className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                        className="rounded border-gray-300 text-[#053F53] focus:ring-teal-500"
                       />
                     </th>
                     <th className="p-4 text-left text-gray-700 font-semibold">
@@ -402,14 +402,14 @@ Customer Success Team`;
                           type="checkbox"
                           checked={selectedUsers.has(item.id)}
                           onChange={() => toggleUserSelection(item.id)}
-                          className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                          className="rounded border-gray-300 text-[#053F53] focus:ring-teal-500"
                         />
                       </td>
                       <td className="p-4">
                         <div className="flex flex-col">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-teal-400 to-teal-600 flex items-center justify-center text-white font-medium">
-                              {item.name.charAt(0)}
+                            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <User className="w-4 h-4 text-[#053F53]" />
                             </div>
                             <div>
                               <p className="font-medium text-gray-800">
@@ -466,7 +466,7 @@ Customer Success Team`;
                                 ? "bg-red-100 text-red-700"
                                 : item.status === "expiring"
                                   ? "bg-orange-100 text-orange-700"
-                                  : "bg-green-100 text-green-700"
+                                  : "bg-green-100 text-[#053F53]"
                             }`}
                           >
                             {item.status === "expired" && (
@@ -500,7 +500,7 @@ Customer Success Team`;
                       <td className="p-4">
                         <button
                           onClick={() => sendReminder(item)}
-                          className="px-3 py-1.5 bg-teal-50 text-teal-600 rounded-lg text-sm font-medium hover:bg-teal-100 transition-colors flex items-center gap-1"
+                          className="px-3 py-1.5 bg-teal-50 text-[#053F53] rounded-lg text-sm font-medium hover:bg-teal-100 transition-colors flex items-center gap-1"
                         >
                           <Send className="w-3 h-3" />
                           Send
@@ -545,7 +545,7 @@ Customer Success Team`;
                               expandedDate === group.date ? null : group.date,
                             )
                           }
-                          className="text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1"
+                          className="text-sm text-[#053F53] hover:text-teal-700 flex items-center gap-1"
                         >
                           {expandedDate === group.date ? "Hide" : "Show"} users
                           <ChevronDown
@@ -556,7 +556,7 @@ Customer Success Team`;
                     </div>
                     <button
                       onClick={() => sendRemindersByDate(group.date)}
-                      className="px-4 py-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-medium hover:from-teal-600 hover:to-teal-700 transition-all duration-200 flex items-center gap-2 shadow-sm"
+                      className="px-4 py-2 bg-gradient-to-r from-[#053F53] to-[#0470949f] text-white rounded-lg font-medium hover:from-[#053F53] hover:to-teal-700 transition-all duration-200 flex items-center gap-2 shadow-sm"
                     >
                       <Send className="w-4 h-4" />
                       Send to All ({group.count})
@@ -584,7 +584,7 @@ Customer Success Team`;
                           </div>
                           <button
                             onClick={() => sendReminder(user)}
-                            className="text-sm text-teal-600 hover:text-teal-700"
+                            className="text-sm text-[#053F53] hover:text-teal-700"
                           >
                             Send individual
                           </button>
@@ -621,7 +621,7 @@ Customer Success Team`;
                       onChange={() => setAutoSend(!autoSend)}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#053F53]"></div>
                   </label>
                 </div>
 
@@ -630,7 +630,7 @@ Customer Success Team`;
                   disabled={selectedUsers.size === 0}
                   className={`w-full py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 ${
                     selectedUsers.size > 0
-                      ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700 shadow-md"
+                      ? "bg-gradient-to-r from-teal-500 to-[#053F53] text-white hover:from-[#053F53] hover:to-teal-700 shadow-md"
                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
                 >
@@ -640,7 +640,7 @@ Customer Success Team`;
 
                 <button
                   onClick={sendAllReminders}
-                  className="w-full py-3 border-2 border-teal-500 text-teal-600 rounded-xl font-medium hover:bg-teal-50 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3 border-2 border-[#053F53] text-[#053F53] rounded-xl font-medium hover:bg-teal-50 transition-colors flex items-center justify-center gap-2"
                 >
                   <Send className="w-5 h-5" />
                   Send All Reminders
@@ -650,15 +650,33 @@ Customer Success Team`;
                   <h4 className="font-medium text-gray-800 mb-2">
                     Message Preview
                   </h4>
-                  <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                    <p className="text-gray-600 mb-2">
-                      Subject: Your Plan Expiration Reminder
-                    </p>
-                    <div className="text-gray-500 whitespace-pre-line">
-                      Dear [Customer Name], Your [Plan Name] plan is expiring on
-                      [Date]. Renew now to continue enjoying all the premium
-                      features without interruption. Renew here: [Renewal Link]
-                      Best regards, Customer Success Team
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Subject
+                      </label>
+                      <input
+                        type="text"
+                        defaultValue="Your Plan Expiration Reminder"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none "
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Message Body
+                      </label>
+                      <textarea
+                        rows="6"
+                        defaultValue={`Dear [Customer Name],
+
+Your [Plan Name] plan is expiring on [Date]. Renew now to continue enjoying all the premium features without interruption.
+
+Renew here: [Renewal Link]
+
+Best regards,
+Customer Success Team`}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none "
+                      />
                     </div>
                   </div>
                 </div>
@@ -679,7 +697,7 @@ Customer Success Team`;
                       className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded"
                     >
                       <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
-                        <Mail className="w-4 h-4 text-teal-600" />
+                        <Mail className="w-4 h-4 text-[#053F53]" />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-800">
@@ -689,7 +707,7 @@ Customer Success Team`;
                           Plan: {log.plan} • {log.date}
                         </p>
                       </div>
-                      <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                      <span className="px-2 py-1 bg-green-100 text-[#053F53] text-xs rounded-full">
                         Sent
                       </span>
                     </div>
@@ -704,7 +722,7 @@ Customer Success Team`;
             </div>
 
             {/* Summary */}
-            <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl p-5 text-white">
+            <div className="bg-gradient-to-r from-[#053F53] to-[#0470949f] rounded-xl p-5 text-white">
               <h3 className="font-semibold mb-3">Summary</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">

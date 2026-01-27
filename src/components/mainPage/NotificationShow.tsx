@@ -8,8 +8,24 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+// Define types for notifications
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: string;
+  plan: string;
+  timestamp: string;
+  read: boolean;
+  status: string;
+}
+
+interface NotificationCardProps {
+  notification: Notification;
+}
+
 // Mock notification data
-const notifications = [
+const notifications: Notification[] = [
   {
     id: 1,
     title: "New Driver Request",
@@ -52,7 +68,9 @@ const notifications = [
   },
 ];
 
-const NotificationCard = ({ notification }) => {
+const NotificationCard: React.FC<NotificationCardProps> = ({
+  notification,
+}) => {
   const getIcon = () => {
     switch (notification.type) {
       case "driver_request":
@@ -152,7 +170,7 @@ const NotificationCard = ({ notification }) => {
 
 export default function NotificationShow() {
   const [notificationsList, setNotificationsList] =
-    React.useState(notifications);
+    React.useState<Notification[]>(notifications);
   const unreadCount = notificationsList.filter((n) => !n.read).length;
 
   const markAllAsRead = () => {
@@ -165,7 +183,7 @@ export default function NotificationShow() {
     setNotificationsList([]);
   };
 
-  const filterByType = (type) => {
+  const filterByType = (type: string) => {
     if (type === "all") {
       setNotificationsList(notifications);
     } else {

@@ -412,16 +412,23 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
     // Apply sorting
     if (sortConfig !== null) {
       result = [...result].sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        // Handle undefined safely (no behavior change)
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return sortConfig.direction === "asc" ? 1 : -1;
+        if (bValue == null) return sortConfig.direction === "asc" ? -1 : 1;
+
+        if (aValue < bValue) {
           return sortConfig.direction === "asc" ? -1 : 1;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if (aValue > bValue) {
           return sortConfig.direction === "asc" ? 1 : -1;
         }
         return 0;
       });
     }
-
     setFilteredPayments(result);
     setCurrentPage(1);
   }, [

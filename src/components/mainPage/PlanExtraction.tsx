@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Calendar,
   Mail,
@@ -14,7 +14,35 @@ import {
   CalendarDays,
 } from "lucide-react";
 
-const plansData = [
+interface Plan {
+  id: number;
+  name: string;
+  plan: string;
+  planColor: string;
+  phone: string;
+  email: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  daysLeft: number;
+}
+
+interface GroupedDate {
+  date: string;
+  users: Plan[];
+  count: number;
+}
+
+interface SendLog {
+  id: number;
+  user: string;
+  email: string;
+  plan: string;
+  date: string;
+  status: string;
+}
+
+const plansData: Plan[] = [
   {
     id: 1,
     name: "Mak Alex",
@@ -78,31 +106,34 @@ const plansData = [
 ];
 
 const PlanExtraction = () => {
-  const [autoSend, setAutoSend] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState("all");
-  const [expandedDate, setExpandedDate] = useState(null);
-  const [sendLogs, setSendLogs] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState(new Set());
+  const [autoSend, setAutoSend] = useState<boolean>(false);
+  const [selectedFilter, setSelectedFilter] = useState<string>("all");
+  const [expandedDate, setExpandedDate] = useState<string | null>(null);
+  const [sendLogs, setSendLogs] = useState<SendLog[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
 
   // Group users by expiry date
-  const groupedByDate = plansData.reduce((acc, item) => {
-    const date = item.endDate;
-    if (!acc[date]) {
-      acc[date] = {
-        date,
-        users: [],
-        count: 0,
-      };
-    }
-    acc[date].users.push(item);
-    acc[date].count++;
-    return acc;
-  }, {});
+  const groupedByDate: Record<string, GroupedDate> = plansData.reduce(
+    (acc, item) => {
+      const date = item.endDate;
+      if (!acc[date]) {
+        acc[date] = {
+          date,
+          users: [],
+          count: 0,
+        };
+      }
+      acc[date].users.push(item);
+      acc[date].count++;
+      return acc;
+    },
+    {} as Record<string, GroupedDate>,
+  );
 
-  const groupedDates = Object.values(groupedByDate);
+  const groupedDates: GroupedDate[] = Object.values(groupedByDate);
 
   // Filter plans based on selected filter
-  const getFilteredPlans = () => {
+  const getFilteredPlans = (): Plan[] => {
     switch (selectedFilter) {
       case "today":
         return plansData.filter((plan) => plan.daysLeft === 0);
@@ -123,7 +154,7 @@ const PlanExtraction = () => {
 
   const filteredPlans = getFilteredPlans();
 
-  const sendReminder = (user) => {
+  const sendReminder = (user: Plan) => {
     const message = `Dear ${user.name},
 
 Your ${user.plan} plan is expiring on ${user.endDate}. Renew now to continue enjoying all the premium features without interruption.
@@ -137,7 +168,7 @@ Customer Success Team`;
     console.log(`Message: ${message}`);
 
     // Add to logs
-    const newLog = {
+    const newLog: SendLog = {
       id: Date.now(),
       user: user.name,
       email: user.email,
@@ -150,13 +181,13 @@ Customer Success Team`;
     return message;
   };
 
-  const sendRemindersByDate = (date) => {
+  const sendRemindersByDate = (date: string) => {
     const group = groupedByDate[date];
     if (!group) return;
 
     const messages = [];
     group.users.forEach((user) => {
-      const message = sendReminder(user, date);
+      const message = sendReminder(user);
       messages.push({
         user: user.name,
         message: message,
@@ -191,7 +222,7 @@ Customer Success Team`;
     alert(`✅ Sent ${filteredPlans.length} reminders successfully`);
   };
 
-  const toggleUserSelection = (userId) => {
+  const toggleUserSelection = (userId: number) => {
     const newSelected = new Set(selectedUsers);
     if (newSelected.has(userId)) {
       newSelected.delete(userId);
@@ -666,7 +697,7 @@ Customer Success Team`;
                         Message Body
                       </label>
                       <textarea
-                        rows="6"
+                        rows={6}
                         defaultValue={`Dear [Customer Name],
 
 Your [Plan Name] plan is expiring on [Date]. Renew now to continue enjoying all the premium features without interruption.

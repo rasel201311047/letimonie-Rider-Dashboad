@@ -1,4 +1,4 @@
-import React from "react";
+import type { Ride } from "../../types";
 import MetricCard from "../cardcomponent/MetricCard";
 import RevenueGraph from "../cardcomponent/RevenueGraph";
 import UserGrowthGraph from "../cardcomponent/UserGrowthGraph";

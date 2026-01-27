@@ -1,4 +1,3 @@
-import React from "react";
 import MetricCard from "../cardcomponent/MetricCard";
 import FinanceTableWithData from "../table/FinanceTableWithData";
 import RevenueGraph from "../cardcomponent/RevenueGraph";

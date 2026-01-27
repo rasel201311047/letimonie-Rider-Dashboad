@@ -77,5 +77,4 @@ export const initialDrivers: Driver[] = [
     carYear: 2022,
     licenseNumber: "DL12345678",
   },
-  // ... rest of your mock data
 ];

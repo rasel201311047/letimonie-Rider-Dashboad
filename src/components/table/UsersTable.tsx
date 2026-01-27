@@ -30,7 +30,7 @@ const initialRiders: Rider[] = [
   {
     id: "R-56",
     name: "Pierre Martin",
-    image: "",
+
     email: "pierre.m@email.com",
     phone: "+33 6 12 34 56 78",
     location: "Paris, France",

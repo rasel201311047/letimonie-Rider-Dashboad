@@ -18,6 +18,11 @@ const Layout: React.FC = () => {
       label: "Financial Analytics",
       path: "/financial-analytics",
     },
+    {
+      id: "subcription",
+      label: "Subcription",
+      path: "/subcription",
+    },
     { id: "PlanExtraction", label: "Plan Extraction", path: "/PlanExtraction" },
     { id: "chat", label: "Help and Souport", path: "/chat" },
     { id: "ReportShowPage", label: "Report", path: "/ReportShowPage" },

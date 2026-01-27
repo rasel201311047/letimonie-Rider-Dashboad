@@ -1,14 +1,13 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { Bell, Grid, MessageCircleMore } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import type { RootState } from "../../rtkquery/store";
 
 export default function Admin() {
   const routeName = useSelector(
     (state: RootState) => state.globaldata.routeName,
   );
-  const dispatch = useDispatch();
+
   console.log(routeName);
 
   const getTitle = (routeName: string) => {
@@ -30,9 +29,11 @@ export default function Admin() {
         return "Notifications";
       case "drivers":
         return "Drivers Mangement";
-
       case "editprofile":
         return "Editprofile";
+
+      case "subcription":
+        return "Subcription";
 
       case "admin":
         return "Admin List";
@@ -65,6 +66,8 @@ export default function Admin() {
         return "rides/show";
       case "PlanExtraction":
         return "Plan Extraction/mangement";
+      case "subcription":
+        return "subcription/mangement";
 
       case "financial-analytics":
         return "financial-analytics/mangement";

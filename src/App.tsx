@@ -21,17 +21,24 @@ import TermsCondition from "./components/setting/TermsCondition";
 import Admin from "./components/setting/Admin";
 import PlanExpiration from "./components/mainPage/PlanExtraction";
 import NotificationShow from "./components/mainPage/NotificationShow";
+import Subcription from "./components/mainPage/Subcription";
+import ChangePasswordPage from "./components/auth/ChangePasswordPage";
+import SigninPage from "./components/auth/SigninPage";
+import Forgetpassword from "./components/auth/Forgetpassword";
+import OTPPage from "./components/auth/OTPPage";
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Layout route */}
-        <Route path="/" element={<Layout />}>
+        <Route path="/" element={<Navigate to="/signin" replace />} />
+        <Route path="/signin" element={<SigninPage />} />
+        <Route path="/forgetpassword" element={<Forgetpassword />} />
+        <Route path="/OTPPage" element={<OTPPage />} />
+        <Route path="/ChangePasswordPage" element={<ChangePasswordPage />} />
+        <Route element={<Layout />}>
           {/* Default route */}
-          <Route index element={<Navigate to="/dashboard" replace />} />
 
-          {/* Pages */}
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/chat" element={<ChatPage />} />
@@ -40,6 +47,7 @@ function App() {
           <Route path="/financial-analytics" element={<FinanceAnalysis />} />
           <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/ReportShowPage" element={<ReportShowPage />} />
+          <Route path="/subcription" element={<Subcription />} />
           <Route path="/PlanExtraction" element={<PlanExpiration />} />
           <Route path="/NotificationShow" element={<NotificationShow />} />
 

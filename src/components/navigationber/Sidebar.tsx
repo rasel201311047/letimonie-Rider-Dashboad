@@ -20,6 +20,7 @@ import {
   MessagesSquare,
   UsersRound,
   Orbit,
+  Medal,
 } from "lucide-react";
 import type { NavItem } from "../../types";
 import { useDispatch, useSelector } from "react-redux";
@@ -60,6 +61,8 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
         return <Briefcase size={20} />;
       case "PlanExtraction":
         return <Orbit size={20} />;
+      case "subcription":
+        return <Medal size={20} />;
 
       case "chat":
         return <MessagesSquare size={20} />;

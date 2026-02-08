@@ -504,13 +504,13 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
       case "Cash":
         return (
           <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-            <span className="text-green-600 font-bold text-xs">$</span>
+            <span className="text-green-600 font-bold text-xs">JOD</span>
           </div>
         );
       default:
         return (
           <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
-            <span className="text-gray-600 font-bold text-xs">$</span>
+            <span className="text-gray-600 font-bold text-xs">JOD</span>
           </div>
         );
     }
@@ -519,7 +519,7 @@ const FinanceTable: React.FC<FinanceTableProps> = ({ payments }) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: "JOD",
     }).format(amount);
   };
 

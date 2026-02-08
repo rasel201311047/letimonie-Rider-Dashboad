@@ -627,7 +627,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="text-sm text-gray-500">Amount Spent</div>
               <div className="text-2xl font-semibold text-gray-900 mt-1">
-                ${rider.spent}
+                {rider.spent} JOD
               </div>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
@@ -1420,7 +1420,7 @@ export default function ProfessionalUsersTable() {
                               {rider.name}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {rider.rides} rides • ${rider.spent} spent
+                              {rider.rides} rides • {rider.spent} JOD spent
                             </div>
                           </div>
                         </div>

@@ -7,7 +7,6 @@ import {
   XCircle,
   Calendar,
   Users,
-  DollarSign,
   Download,
   Search,
   Filter,
@@ -219,14 +218,19 @@ const Subscription = () => {
             <div>
               <p className="text-gray-500 text-sm">Total Revenue</p>
               <h3 className="text-2xl font-bold mt-1">
-                ${totalRevenue.toFixed(2)}
+                JOD {totalRevenue.toFixed(2)}
               </h3>
             </div>
             <div
-              className="p-3 rounded-full"
+              className="p-3 rounded-full flex-row justify-center items-center"
               style={{ backgroundColor: "#053F5310" }}
             >
-              <DollarSign className="w-6 h-6" style={{ color: "#053F53" }} />
+              <div
+                style={{ color: "#053F53" }}
+                className="w-6 h-6 text-xs flex-row justify-center items-center font-bold "
+              >
+                JOD
+              </div>
             </div>
           </div>
         </div>
@@ -393,7 +397,7 @@ const Subscription = () => {
                     </div>
                     <div className="mt-4">
                       <div className="text-3xl font-bold">
-                        ${plan.price.toFixed(2)}
+                        JOD {plan.price.toFixed(2)}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <Users className="w-4 h-4" />
@@ -568,7 +572,7 @@ const Subscription = () => {
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      $
+                      JOD
                     </span>
                     <input
                       type="number"

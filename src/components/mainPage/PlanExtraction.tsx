@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Calendar,
   Mail,
@@ -12,6 +12,8 @@ import {
   CheckCircle,
   AlertCircle,
   CalendarDays,
+  Search,
+  X,
 } from "lucide-react";
 
 interface Plan {
@@ -111,48 +113,77 @@ const PlanExtraction = () => {
   const [expandedDate, setExpandedDate] = useState<string | null>(null);
   const [sendLogs, setSendLogs] = useState<SendLog[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
 
-  // Group users by expiry date
-  const groupedByDate: Record<string, GroupedDate> = plansData.reduce(
-    (acc, item) => {
-      const date = item.endDate;
-      if (!acc[date]) {
-        acc[date] = {
-          date,
-          users: [],
-          count: 0,
-        };
-      }
-      acc[date].users.push(item);
-      acc[date].count++;
-      return acc;
-    },
-    {} as Record<string, GroupedDate>,
-  );
+  // Search filter function
+  const searchFilter = (plans: Plan[], term: string): Plan[] => {
+    if (!term.trim()) return plans;
 
-  const groupedDates: GroupedDate[] = Object.values(groupedByDate);
+    const lowerTerm = term.toLowerCase();
+    return plans.filter(
+      (plan) =>
+        plan.name.toLowerCase().includes(lowerTerm) ||
+        plan.email.toLowerCase().includes(lowerTerm) ||
+        plan.id.toString().includes(lowerTerm) ||
+        plan.phone.includes(lowerTerm) ||
+        plan.plan.toLowerCase().includes(lowerTerm),
+    );
+  };
 
   // Filter plans based on selected filter
   const getFilteredPlans = (): Plan[] => {
+    let filtered = plansData;
+
+    // Apply status filter
     switch (selectedFilter) {
       case "today":
-        return plansData.filter((plan) => plan.daysLeft === 0);
+        filtered = filtered.filter((plan) => plan.daysLeft === 0);
+        break;
       case "3days":
-        return plansData.filter(
+        filtered = filtered.filter(
           (plan) => plan.daysLeft <= 3 && plan.daysLeft > 0,
         );
+        break;
       case "7days":
-        return plansData.filter(
+        filtered = filtered.filter(
           (plan) => plan.daysLeft <= 7 && plan.daysLeft > 0,
         );
+        break;
       case "expired":
-        return plansData.filter((plan) => plan.daysLeft < 0);
+        filtered = filtered.filter((plan) => plan.daysLeft < 0);
+        break;
       default:
-        return plansData;
+        filtered = filtered;
     }
+
+    // Apply search filter
+    return searchFilter(filtered, searchTerm);
   };
 
   const filteredPlans = getFilteredPlans();
+
+  // Group users by expiry date (using filtered plans for grouped view)
+  const groupedByDate: Record<string, GroupedDate> = useMemo(() => {
+    return filteredPlans.reduce(
+      (acc, item) => {
+        const date = item.endDate;
+        if (!acc[date]) {
+          acc[date] = {
+            date,
+            users: [],
+            count: 0,
+          };
+        }
+        acc[date].users.push(item);
+        acc[date].count++;
+        return acc;
+      },
+      {} as Record<string, GroupedDate>,
+    );
+  }, [filteredPlans]);
+
+  const groupedDates: GroupedDate[] = Object.values(groupedByDate);
 
   const sendReminder = (user: Plan) => {
     const message = `Dear ${user.name},
@@ -238,6 +269,10 @@ Customer Success Team`;
     } else {
       setSelectedUsers(new Set(filteredPlans.map((user) => user.id)));
     }
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
   };
 
   const filters = [
@@ -334,13 +369,13 @@ Customer Success Team`;
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Auto Send</p>
+              <p className="text-sm text-gray-500">Search Results</p>
               <p className="text-2xl font-bold text-gray-800">
-                {autoSend ? "Active" : "Inactive"}
+                {filteredPlans.length}
               </p>
             </div>
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <Bell className="w-6 h-6 text-gray-600" />
+            <div className="p-2 bg-purple-50 rounded-lg">
+              <Search className="w-6 h-6 text-purple-600" />
             </div>
           </div>
         </div>
@@ -349,17 +384,51 @@ Customer Success Team`;
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Main Content */}
         <div className="lg:w-2/3">
-          {/* Filters */}
+          {/* Search and Filters */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <Filter className="w-5 h-5" />
-                Filter Plans
-              </h2>
-              <div className="text-sm text-gray-500">
-                {selectedUsers.size > 0 && (
-                  <span>{selectedUsers.size} selected</span>
+            <div className="flex flex-col md:flex-row gap-4 mb-4">
+              <div className="md:w-1/2">
+                <div className="relative">
+                  <div
+                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isSearchFocused ? "text-[#053F53]" : "text-gray-400"}`}
+                  >
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search by name, email, ID, phone, or plan..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setIsSearchFocused(false)}
+                    className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#053F53] focus:border-transparent transition-all duration-200"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={clearSearch}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+                {searchTerm && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    Found {filteredPlans.length} result
+                    {filteredPlans.length !== 1 ? "s" : ""} for "{searchTerm}"
+                  </div>
                 )}
+              </div>
+              <div className="md:w-1/2 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <Filter className="w-5 h-5" />
+                  Filter Plans
+                </h2>
+                <div className="text-sm text-gray-500">
+                  {selectedUsers.size > 0 && (
+                    <span>{selectedUsers.size} selected</span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -423,122 +492,145 @@ Customer Success Team`;
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPlans.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="border-t hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="p-4">
-                        <input
-                          type="checkbox"
-                          checked={selectedUsers.has(item.id)}
-                          onChange={() => toggleUserSelection(item.id)}
-                          className="rounded border-gray-300 text-[#053F53] focus:ring-teal-500"
-                        />
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-3">
-                            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <User className="w-4 h-4 text-[#053F53]" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-800">
-                                {item.name}
-                              </p>
-                              <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <Mail className="w-3 h-3" />
-                                <span>{item.email}</span>
+                  {filteredPlans.length > 0 ? (
+                    filteredPlans.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="border-t hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="p-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedUsers.has(item.id)}
+                            onChange={() => toggleUserSelection(item.id)}
+                            className="rounded border-gray-300 text-[#053F53] focus:ring-teal-500"
+                          />
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <User className="w-4 h-4 text-[#053F53]" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-800">
+                                  {item.name}
+                                  <span className="ml-2 text-xs text-gray-500 font-normal">
+                                    ID: {item.id}
+                                  </span>
+                                </p>
+                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                  <Mail className="w-3 h-3" />
+                                  <span>{item.email}</span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-bold text-white ${item.planColor}`}
-                          >
-                            {item.plan}
-                          </span>
-                          <div className="flex items-center gap-1 text-sm text-gray-500">
-                            <Phone className="w-3 h-3" />
-                            <span>{item.phone}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="w-3 h-3 text-gray-400" />
-                            <span className="text-gray-600">
-                              Start:{" "}
-                              <span className="font-medium">
-                                {item.startDate}
-                              </span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-bold text-white ${item.planColor}`}
+                            >
+                              {item.plan}
                             </span>
+                            <div className="flex items-center gap-1 text-sm text-gray-500">
+                              <Phone className="w-3 h-3" />
+                              <span>{item.phone}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="w-3 h-3 text-gray-400" />
-                            <span className="text-gray-600">
-                              Expires:{" "}
-                              <span className="font-medium">
-                                {item.endDate}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Calendar className="w-3 h-3 text-gray-400" />
+                              <span className="text-gray-600">
+                                Start:{" "}
+                                <span className="font-medium">
+                                  {item.startDate}
+                                </span>
                               </span>
-                            </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Calendar className="w-3 h-3 text-gray-400" />
+                              <span className="text-gray-600">
+                                Expires:{" "}
+                                <span className="font-medium">
+                                  {item.endDate}
+                                </span>
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-col gap-1">
-                          <span
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                              item.status === "expired"
-                                ? "bg-red-100 text-red-700"
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-col gap-1">
+                            <span
+                              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+                                item.status === "expired"
+                                  ? "bg-red-100 text-red-700"
+                                  : item.status === "expiring"
+                                    ? "bg-orange-100 text-orange-700"
+                                    : "bg-green-100 text-[#053F53]"
+                              }`}
+                            >
+                              {item.status === "expired" && (
+                                <AlertCircle className="w-3 h-3" />
+                              )}
+                              {item.status === "expiring" && (
+                                <Clock className="w-3 h-3" />
+                              )}
+                              {item.status === "active" && (
+                                <CheckCircle className="w-3 h-3" />
+                              )}
+                              {item.status === "expired"
+                                ? "Expired"
                                 : item.status === "expiring"
-                                  ? "bg-orange-100 text-orange-700"
-                                  : "bg-green-100 text-[#053F53]"
-                            }`}
+                                  ? "Expiring Soon"
+                                  : "Active"}
+                            </span>
+                            {item.daysLeft >= 0 ? (
+                              <span className="text-xs text-gray-500">
+                                {item.daysLeft === 0
+                                  ? "Today"
+                                  : `${item.daysLeft} days left`}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-red-500">
+                                Expired {Math.abs(item.daysLeft)} days ago
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <button
+                            onClick={() => sendReminder(item)}
+                            className="px-3 py-1.5 bg-teal-50 text-[#053F53] rounded-lg text-sm font-medium hover:bg-teal-100 transition-colors flex items-center gap-1"
                           >
-                            {item.status === "expired" && (
-                              <AlertCircle className="w-3 h-3" />
-                            )}
-                            {item.status === "expiring" && (
-                              <Clock className="w-3 h-3" />
-                            )}
-                            {item.status === "active" && (
-                              <CheckCircle className="w-3 h-3" />
-                            )}
-                            {item.status === "expired"
-                              ? "Expired"
-                              : item.status === "expiring"
-                                ? "Expiring Soon"
-                                : "Active"}
-                          </span>
-                          {item.daysLeft >= 0 ? (
-                            <span className="text-xs text-gray-500">
-                              {item.daysLeft === 0
-                                ? "Today"
-                                : `${item.daysLeft} days left`}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-red-500">
-                              Expired {Math.abs(item.daysLeft)} days ago
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => sendReminder(item)}
-                          className="px-3 py-1.5 bg-teal-50 text-[#053F53] rounded-lg text-sm font-medium hover:bg-teal-100 transition-colors flex items-center gap-1"
-                        >
-                          <Send className="w-3 h-3" />
-                          Send
-                        </button>
+                            <Send className="w-3 h-3" />
+                            Send
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-gray-500">
+                        <Search className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                        <p className="text-lg font-medium mb-2">
+                          No results found
+                        </p>
+                        <p>Try adjusting your search or filter criteria</p>
+                        {searchTerm && (
+                          <button
+                            onClick={clearSearch}
+                            className="mt-4 px-4 py-2 text-[#053F53] hover:text-teal-700 font-medium"
+                          >
+                            Clear search
+                          </button>
+                        )}
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -553,78 +645,88 @@ Customer Success Team`;
               </h3>
               <p className="text-sm text-gray-500 mt-1">
                 Send reminders to all users with same expiry date
+                {searchTerm && " (filtered by search)"}
               </p>
             </div>
             <div className="divide-y">
-              {groupedDates.map((group) => (
-                <div key={group.date} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium text-gray-800">
-                            {group.date}
-                          </span>
-                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                            {group.count} {group.count === 1 ? "user" : "users"}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() =>
-                            setExpandedDate(
-                              expandedDate === group.date ? null : group.date,
-                            )
-                          }
-                          className="text-sm text-[#053F53] hover:text-teal-700 flex items-center gap-1"
-                        >
-                          {expandedDate === group.date ? "Hide" : "Show"} users
-                          <ChevronDown
-                            className={`w-4 h-4 transition-transform ${expandedDate === group.date ? "rotate-180" : ""}`}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => sendRemindersByDate(group.date)}
-                      className="px-4 py-2 bg-gradient-to-r from-[#053F53] to-[#0470949f] text-white rounded-lg font-medium hover:from-[#053F53] hover:to-teal-700 transition-all duration-200 flex items-center gap-2 shadow-sm"
-                    >
-                      <Send className="w-4 h-4" />
-                      Send to All ({group.count})
-                    </button>
-                  </div>
-
-                  {expandedDate === group.date && (
-                    <div className="mt-3 pl-8 border-l-2 border-teal-200">
-                      {group.users.map((user) => (
-                        <div
-                          key={user.id}
-                          className="py-2 flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-3">
-                            <User className="w-4 h-4 text-gray-400" />
-                            <span className="font-medium">{user.name}</span>
-                            <span className="text-sm text-gray-500">
-                              {user.email}
+              {groupedDates.length > 0 ? (
+                groupedDates.map((group) => (
+                  <div key={group.date} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <span className="font-medium text-gray-800">
+                              {group.date}
                             </span>
-                            <span
-                              className={`px-2 py-0.5 text-xs rounded-full ${user.plan === "Gold" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-700"}`}
-                            >
-                              {user.plan}
+                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                              {group.count}{" "}
+                              {group.count === 1 ? "user" : "users"}
                             </span>
                           </div>
                           <button
-                            onClick={() => sendReminder(user)}
-                            className="text-sm text-[#053F53] hover:text-teal-700"
+                            onClick={() =>
+                              setExpandedDate(
+                                expandedDate === group.date ? null : group.date,
+                              )
+                            }
+                            className="text-sm text-[#053F53] hover:text-teal-700 flex items-center gap-1"
                           >
-                            Send individual
+                            {expandedDate === group.date ? "Hide" : "Show"}{" "}
+                            users
+                            <ChevronDown
+                              className={`w-4 h-4 transition-transform ${expandedDate === group.date ? "rotate-180" : ""}`}
+                            />
                           </button>
                         </div>
-                      ))}
+                      </div>
+                      <button
+                        onClick={() => sendRemindersByDate(group.date)}
+                        className="px-4 py-2 bg-gradient-to-r from-[#053F53] to-[#0470949f] text-white rounded-lg font-medium hover:from-[#053F53] hover:to-teal-700 transition-all duration-200 flex items-center gap-2 shadow-sm"
+                      >
+                        <Send className="w-4 h-4" />
+                        Send to All ({group.count})
+                      </button>
                     </div>
-                  )}
+
+                    {expandedDate === group.date && (
+                      <div className="mt-3 pl-8 border-l-2 border-teal-200">
+                        {group.users.map((user) => (
+                          <div
+                            key={user.id}
+                            className="py-2 flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-3">
+                              <User className="w-4 h-4 text-gray-400" />
+                              <span className="font-medium">{user.name}</span>
+                              <span className="text-sm text-gray-500">
+                                {user.email}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 text-xs rounded-full ${user.plan === "Gold" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-700"}`}
+                              >
+                                {user.plan}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => sendReminder(user)}
+                              className="text-sm text-[#053F53] hover:text-teal-700"
+                            >
+                              Send individual
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="p-8 text-center text-gray-500">
+                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>No expiry dates found for current search/filter</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

@@ -26,7 +26,7 @@ const mockRides = [
     destination: "456 Park Ave, Uptown",
     status: "completed",
     date: "2024-01-15",
-    fare: "$24.50",
+    fare: "24.50 JOD",
     distance: "5.2 miles",
     duration: "18 min",
   },
@@ -38,7 +38,7 @@ const mockRides = [
     destination: "321 Pine Road",
     status: "in_progress",
     date: "2024-01-15",
-    fare: "$18.75",
+    fare: "18.75 JOD",
     distance: "3.8 miles",
     duration: "12 min",
   },
@@ -50,7 +50,7 @@ const mockRides = [
     destination: "888 Business Center",
     status: "cancelled",
     date: "2024-01-14",
-    fare: "$32.00",
+    fare: "32.00 JOD",
     distance: "8.1 miles",
     duration: "25 min",
   },
@@ -62,7 +62,7 @@ const mockRides = [
     destination: "444 Mountain Ave",
     status: "scheduled",
     date: "2024-01-16",
-    fare: "$28.90",
+    fare: "28.90 JOD",
     distance: "6.5 miles",
     duration: "20 min",
   },
@@ -74,7 +74,7 @@ const mockRides = [
     destination: "777 Mall Plaza",
     status: "completed",
     date: "2024-01-14",
-    fare: "$21.30",
+    fare: "21.30 JOD",
     distance: "4.3 miles",
     duration: "15 min",
   },
@@ -86,7 +86,7 @@ const mockRides = [
     destination: "202 Business Park",
     status: "completed",
     date: "2024-01-13",
-    fare: "$19.50",
+    fare: "19.50 JOD",
     distance: "4.0 miles",
     duration: "14 min",
   },
@@ -98,7 +98,7 @@ const mockRides = [
     destination: "404 Innovation Center",
     status: "in_progress",
     date: "2024-01-15",
-    fare: "$27.80",
+    fare: "27.80 JOD",
     distance: "7.2 miles",
     duration: "22 min",
   },
@@ -110,7 +110,7 @@ const mockRides = [
     destination: "606 Theater Square",
     status: "scheduled",
     date: "2024-01-17",
-    fare: "$23.40",
+    fare: "23.40 JOD",
     distance: "5.8 miles",
     duration: "19 min",
   },
@@ -122,7 +122,7 @@ const mockRides = [
     destination: "808 Residential Area",
     status: "cancelled",
     date: "2024-01-14",
-    fare: "$16.90",
+    fare: "16.90 JOD",
     distance: "3.5 miles",
     duration: "11 min",
   },
@@ -134,7 +134,7 @@ const mockRides = [
     destination: "010 Hotel District",
     status: "completed",
     date: "2024-01-15",
-    fare: "$35.20",
+    fare: "35.20 JOD",
     distance: "9.3 miles",
     duration: "28 min",
   },
@@ -242,7 +242,7 @@ export default function RidesPage() {
       const headers = [
         "Ride ID",
         "Driver",
-        "Rider",
+        "Passenger",
         "Pickup",
         "Destination",
         "Status",
@@ -347,7 +347,10 @@ export default function RidesPage() {
 
       const totalRevenue = ridesToExport
         .filter((r) => r.status === "completed")
-        .reduce((sum, ride) => sum + parseFloat(ride.fare.replace("$", "")), 0);
+        .reduce(
+          (sum, ride) => sum + parseFloat(ride.fare.replace("JOD", "")),
+          0,
+        );
 
       pdf.text(`Total Rides: ${ridesToExport.length}`, 20, startY);
       pdf.text(`Completed: ${completed}`, 60, startY);
@@ -371,8 +374,8 @@ export default function RidesPage() {
       "Ride ID",
       "Driver Name",
       "Driver Rating",
-      "Rider Name",
-      "Rider Rating",
+      "Passenger Name",
+      "Passenger Rating",
       "Pickup Location",
       "Destination",
       "Status",
@@ -527,7 +530,6 @@ export default function RidesPage() {
                   Revenue Today
                 </p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                  $
                   {rides
                     .filter(
                       (r) =>
@@ -538,7 +540,8 @@ export default function RidesPage() {
                         sum + parseFloat(ride.fare.replace("$", "")),
                       0,
                     )
-                    .toFixed(2)}
+                    .toFixed(2)}{" "}
+                  JOD
                 </p>
               </div>
               <div className="bg-purple-50 p-3 rounded-lg">
@@ -558,7 +561,7 @@ export default function RidesPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder="Search by Ride ID, Driver, or Rider..."
+                    placeholder="Search by Ride ID, Driver, or Passenger..."
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all hover:border-gray-400"
                     value={searchTerm}
                     onChange={(e) => {
@@ -672,7 +675,7 @@ export default function RidesPage() {
                     Driver
                   </th>
                   <th className="py-4 px-6 text-left text-xs font-semibold font-['Inter'] text-gray-700 uppercase tracking-wider">
-                    Rider
+                    Passenger
                   </th>
                   <th className="py-4 px-6 text-left text-xs font-semibold font-['Inter'] text-gray-700 uppercase tracking-wider">
                     Locations

@@ -6,7 +6,7 @@ import {
   Car,
   Briefcase,
   Gift,
-  TrendingUp,
+  // TrendingUp,
   Bell,
   Settings,
   ChevronDown,
@@ -17,9 +17,9 @@ import {
   ShieldHalf,
   ReceiptText,
   Flag,
-  MessagesSquare,
+  // MessagesSquare,
   UsersRound,
-  Orbit,
+  // Orbit,
   Medal,
 } from "lucide-react";
 import type { NavItem } from "../../types";
@@ -59,17 +59,17 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
         return <Car size={20} />;
       case "business":
         return <Briefcase size={20} />;
-      case "PlanExtraction":
-        return <Orbit size={20} />;
+      // case "PlanExtraction":
+      //   return <Orbit size={20} />;
       case "subcription":
         return <Medal size={20} />;
 
-      case "chat":
-        return <MessagesSquare size={20} />;
+      // case "chat":
+      //   return <MessagesSquare size={20} />;
       case "referrals":
         return <Gift size={20} />;
-      case "financial-analytics":
-        return <TrendingUp size={20} />;
+      // case "financial-analytics":
+      //   return <TrendingUp size={20} />;
       case "notifications":
         return <Bell size={20} />;
       case "ReportShowPage":

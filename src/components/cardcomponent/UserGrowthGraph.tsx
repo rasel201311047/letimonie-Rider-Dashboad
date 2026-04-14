@@ -7,33 +7,12 @@ import {
   YAxis,
 } from "recharts";
 import { useMemo, useState } from "react";
+import { useGetUserGrowthQuery } from "../../rtkquery/page/dashboadApi";
 
 /* ===== Types ===== */
-type ChartData = {
-  month: string;
-  value: number;
-};
-
 type Props = {
-  rawDataByYear: Record<number, ChartData[]>;
   graphtext: string;
 };
-
-/* ===== Month Template ===== */
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
 
 /* ===== Tooltip ===== */
 const CustomTooltip = ({ active, payload }: any) => {
@@ -47,13 +26,15 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-export default function UserGrowthGraph({ rawDataByYear, graphtext }: Props) {
+export default function UserGrowthGraph({ graphtext }: Props) {
   const CURRENT_YEAR = new Date().getFullYear();
-
   const START_YEAR = CURRENT_YEAR - 4;
   const END_YEAR = CURRENT_YEAR + 2;
 
   const [year, setYear] = useState(CURRENT_YEAR);
+
+  /* ===== API Call ===== */
+  const { data, isLoading } = useGetUserGrowthQuery(year);
 
   /* ===== Year List ===== */
   const allYears = useMemo(() => {
@@ -64,18 +45,21 @@ export default function UserGrowthGraph({ rawDataByYear, graphtext }: Props) {
     return years;
   }, []);
 
-  /* ===== Get Chart Data  ===== */
+  /* ===== Chart Data from API ===== */
   const chartData = useMemo(() => {
-    const yearData = rawDataByYear[year] || [];
+    if (!data?.data) return [];
+    return data.data.map((item) => ({
+      month: item.label,
+      value: item.count,
+    }));
+  }, [data]);
 
-    return MONTHS.map((month) => {
-      const found = yearData.find((d) => d.month === month);
-      return {
-        month,
-        value: found ? found.value : 0,
-      };
-    });
-  }, [year]);
+  /* ===== Max Y-axis value ===== */
+  const maxValue = useMemo(() => {
+    if (!chartData.length) return 10;
+    const max = Math.max(...chartData.map((d) => d.value));
+    return max <= 0 ? 10 : Math.ceil(max * 1.2);
+  }, [chartData]);
 
   return (
     <div className="rounded-2xl bg-white p-5 w-full">
@@ -100,41 +84,47 @@ export default function UserGrowthGraph({ rawDataByYear, graphtext }: Props) {
 
       {/* Chart */}
       <div className="w-full h-[340px]">
-        <ResponsiveContainer>
-          <AreaChart data={chartData}>
-            <defs>
-              <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#9CA3AF" stopOpacity={0.9} />
-                <stop offset="100%" stopColor="#1F2937" stopOpacity={1} />
-              </linearGradient>
-            </defs>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            Loading...
+          </div>
+        ) : (
+          <ResponsiveContainer>
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#9CA3AF" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#1F2937" stopOpacity={1} />
+                </linearGradient>
+              </defs>
 
-            <XAxis
-              dataKey="month"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#6B7280", fontSize: 12 }}
-            />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#6B7280", fontSize: 12 }}
+              />
 
-            <YAxis
-              domain={[0, 110]}
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#6B7280", fontSize: 12 }}
-            />
+              <YAxis
+                domain={[0, maxValue]}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#6B7280", fontSize: 12 }}
+              />
 
-            <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} />
 
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="none"
-              fill="#053F53"
-              dot={false}
-              activeDot={{ r: 6, fill: "#053F53" }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="none"
+                fill="#053F53"
+                dot={false}
+                activeDot={{ r: 6, fill: "#053F53" }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

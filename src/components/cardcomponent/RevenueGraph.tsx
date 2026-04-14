@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -7,47 +9,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useGetRevenueAnalyticsQuery } from "../../rtkquery/page/dashboadApi";
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-const getDataForYear = (
-  rawDataByYear: Record<number, { month: string; value: number }[]>,
-  year: number
-) => {
-  const yearData = rawDataByYear[year] ?? [];
-  const map = Object.fromEntries(yearData.map((d) => [d.month, d.value]));
-
-  return MONTHS.map((month) => ({
-    month,
-    value: map[month] ?? 0,
-  }));
-};
-
-type Props = {
-  rawDataByYear: Record<number, { month: string; value: number }[]>;
-  graphtext: string;
-};
+type Props = { graphtext: string };
 
 const CustomTooltip = ({ active, payload, coordinate }: any) => {
   if (active && payload?.length) {
     return (
       <div
-        className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-md bg-[#0B1F33] px-2 py-1 text-xs font-semibold text-white shadow"
+        className="pointer-events-none absolute -translate-x-1/2 -translate-y-full
+                   rounded-md bg-[#0B1F33] px-2 py-1 text-xs font-semibold
+                   text-white shadow"
         style={{ left: coordinate?.x, top: coordinate?.y }}
       >
         {payload[0].value}
@@ -57,14 +29,23 @@ const CustomTooltip = ({ active, payload, coordinate }: any) => {
   return null;
 };
 
-export default function RevenueGraph({ rawDataByYear, graphtext }: Props) {
+export default function RevenueGraph({ graphtext }: Props) {
   const CURRENT_YEAR = new Date().getFullYear();
   const years = Array.from({ length: 7 }, (_, i) => CURRENT_YEAR - 4 + i);
 
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
   const [open, setOpen] = useState(false);
 
-  const chartData = getDataForYear(rawDataByYear, selectedYear);
+  // ✅ Fetch API data — refetches automatically when selectedYear changes
+  const { data, isLoading, isError } =
+    useGetRevenueAnalyticsQuery(selectedYear);
+
+  // API returns { label, value } — rename "label" → "month" for the chart
+  const chartData =
+    data?.data.map((d) => ({
+      month: d.label,
+      value: d.value,
+    })) ?? [];
 
   return (
     <div className="w-full rounded-2xl bg-white p-6 shadow-sm">
@@ -102,6 +83,10 @@ export default function RevenueGraph({ rawDataByYear, graphtext }: Props) {
           )}
         </div>
       </div>
+
+      {/* States */}
+      {isLoading && <p className="text-sm text-gray-400">Loading...</p>}
+      {isError && <p className="text-sm text-red-400">Failed to load data.</p>}
 
       {/* Chart */}
       <div className="h-[340px]">

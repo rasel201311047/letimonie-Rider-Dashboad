@@ -40,7 +40,7 @@ function App() {
           {/* Default route */}
 
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/users" element={<UsersPage />} />
+          <Route path="/Passengers" element={<UsersPage />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/rides" element={<RidesPage />} />
           <Route path="/drivers" element={<DriverPage />} />

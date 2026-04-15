@@ -6,12 +6,12 @@ import Admin from "../profile/Admin";
 const Layout: React.FC = () => {
   const navItems: NavItem[] = [
     { id: "dashboard", label: "Dashboard", path: "/dashboard" },
+    { id: "rides", label: "Rides", path: "/rides" },
     {
       id: "users",
-      label: "Users",
-      path: "/users",
+      label: "Passengers",
+      path: "/Passengers",
     },
-    { id: "rides", label: "Rides", path: "/rides" },
     { id: "drivers", label: "Drivers", path: "/drivers" },
     // {
     //   id: "financial-analytics",

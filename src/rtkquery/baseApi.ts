@@ -5,6 +5,7 @@ export const baseApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: "http://10.10.20.24:5550/api/v1",
     prepareHeaders: (headers) => {
+      headers.set("Content-Type", "application/json");
       const token = localStorage.getItem("accessToken");
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
@@ -12,5 +13,16 @@ export const baseApi = createApi({
       return headers;
     },
   }),
+  tagTypes: [
+    "Passenger",
+    "Ride",
+    "Drivers",
+    "DriverStats",
+    "DriverDetails",
+    "Subscription",
+    "Reports",
+  ],
+  refetchOnFocus: true, // ✅
+  refetchOnReconnect: true, // ✅
   endpoints: () => ({}),
 });

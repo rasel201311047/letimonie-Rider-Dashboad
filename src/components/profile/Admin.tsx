@@ -18,7 +18,7 @@ export default function Admin() {
       case "dashboard":
         return "Dashboard Default";
       case "users":
-        return "Users Mangement";
+        return "Passengers Mangement";
       case "rides":
         return "Rides Mangement";
       case "PlanExtraction":
@@ -55,7 +55,7 @@ export default function Admin() {
       case "dashboard":
         return "dashboad/default";
       case "users":
-        return "users/mangement";
+        return "passengers/mangement";
       case "rides":
         return "rides/show";
       case "PlanExtraction":

@@ -2,10 +2,11 @@ import { Link } from "react-router-dom";
 import { Bell, Grid } from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../rtkquery/store";
-import { useGetUserOverViewQuery } from "../../rtkquery/page/dashboadApi";
+
+import { useGetProfileQuery } from "../../rtkquery/page/profileApi";
 
 export default function Admin() {
-  const { data, isLoading } = useGetUserOverViewQuery();
+  const { data, isLoading } = useGetProfileQuery();
 
   const adminInfo = data?.data;
 

@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Home,
   MapPin,
   Car,
   Briefcase,
   Gift,
-  // TrendingUp,
   Bell,
   Settings,
   ChevronDown,
@@ -17,10 +16,10 @@ import {
   ShieldHalf,
   ReceiptText,
   Flag,
-  // MessagesSquare,
   UsersRound,
-  // Orbit,
   Medal,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import type { NavItem } from "../../types";
 import { useDispatch, useSelector } from "react-redux";
@@ -33,6 +32,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const routeName = useSelector(
     (state: RootState) => state.globaldata.routeName,
@@ -41,10 +41,17 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(
     {},
   );
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const toggleDropdown = (id: string) => {
     setOpenDropdowns((prev) => ({ ...prev, [id]: !prev[id] }));
     dispatch(setRouteName(id));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    setShowLogoutModal(false);
+    navigate("/signin");
   };
 
   const getIcon = (id: string) => {
@@ -59,17 +66,10 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
         return <Car size={20} />;
       case "business":
         return <Briefcase size={20} />;
-      // case "PlanExtraction":
-      //   return <Orbit size={20} />;
       case "subcription":
         return <Medal size={20} />;
-
-      // case "chat":
-      //   return <MessagesSquare size={20} />;
       case "referrals":
         return <Gift size={20} />;
-      // case "financial-analytics":
-      //   return <TrendingUp size={20} />;
       case "notifications":
         return <Bell size={20} />;
       case "ReportShowPage":
@@ -92,100 +92,162 @@ const Sidebar: React.FC<SidebarProps> = ({ navItems }) => {
   };
 
   return (
-    <aside className="w-64 bg-[#053F53] fixed left-0 top-0 h-screen flex flex-col">
-      {/* Logo */}
-      <div className="p-6">
-        <img
-          src="/logomain.png"
-          alt="Logo"
-          className="w-60 h-auto object-contain"
-        />
-      </div>
+    <>
+      <aside className="w-64 bg-[#053F53] fixed left-0 top-0 h-screen flex flex-col">
+        {/* Logo */}
+        <div className="p-6">
+          <img
+            src="/logomain.png"
+            alt="Logo"
+            className="w-60 h-auto object-contain"
+          />
+        </div>
 
-      {/* Scrollable Nav */}
-      <nav className="flex-1 overflow-y-auto sidebar-scroll px-4 pb-4">
-        <ul className="space-y-2">
-          {navItems.map((item) => {
-            if (item.children?.length) {
+        {/* Scrollable Nav */}
+        <nav className="flex-1 overflow-y-auto sidebar-scroll px-4 pb-4">
+          <ul className="space-y-2">
+            {navItems.map((item) => {
+              if (item.children?.length) {
+                return (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => toggleDropdown(item.id)}
+                      className={`flex w-full items-center justify-between px-4 py-3 rounded-lg transition ${
+                        routeName === item.id
+                          ? "bg-[#0C243D] text-white"
+                          : "text-[#E7E9EC] hover:bg-[#0C243D]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {getIcon(item.id)}
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                      <ChevronDown
+                        size={18}
+                        className={`transition-transform ${
+                          openDropdowns[item.id] ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {openDropdowns[item.id] && (
+                      <ul className="ml-10 mt-2 space-y-1">
+                        {item.children.map((child) => (
+                          <li key={child.id}>
+                            <NavLink
+                              to={child.path ?? "#"}
+                              onClick={() => dispatch(setRouteName(child.id))}
+                              className={({ isActive }) =>
+                                `block px-3 py-2 rounded-md text-sm transition ${
+                                  routeName === child.id || isActive
+                                    ? "bg-[#0C243D] text-white"
+                                    : "text-gray-400 hover:text-white hover:bg-[#0C243D]"
+                                }`
+                              }
+                            >
+                              <div className="flex items-center gap-3">
+                                {getIcon(child.id)}
+                                <span className="font-medium">
+                                  {child.label}
+                                </span>
+                              </div>
+                            </NavLink>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              }
+
               return (
                 <li key={item.id}>
-                  <button
-                    onClick={() => toggleDropdown(item.id)}
-                    className={`flex w-full items-center justify-between px-4 py-3 rounded-lg transition ${
-                      routeName === item.id
-                        ? "bg-[#0C243D] text-white"
-                        : "text-[#E7E9EC] hover:bg-[#0C243D]"
-                    }`}
+                  <NavLink
+                    to={item.path ?? "#"}
+                    onClick={() => dispatch(setRouteName(item.id))}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                        routeName === item.id || isActive
+                          ? "bg-[#0C243D] text-white"
+                          : "text-[#E7E9EC] hover:bg-[#0C243D]"
+                      }`
+                    }
                   >
-                    <div className="flex items-center gap-3">
-                      {getIcon(item.id)}
-                      <span className="font-medium">{item.label}</span>
-                    </div>
-                    <ChevronDown
-                      size={18}
-                      className={`transition-transform ${
-                        openDropdowns[item.id] ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {openDropdowns[item.id] && (
-                    <ul className="ml-10 mt-2 space-y-1">
-                      {item.children.map((child) => (
-                        <li key={child.id}>
-                          <NavLink
-                            to={child.path ?? "#"}
-                            onClick={() => dispatch(setRouteName(child.id))}
-                            className={({ isActive }) =>
-                              `block px-3 py-2 rounded-md text-sm transition ${
-                                routeName === child.id || isActive
-                                  ? "bg-[#0C243D] text-white"
-                                  : "text-gray-400 hover:text-white hover:bg-[#0C243D]"
-                              }`
-                            }
-                          >
-                            <div className="flex items-center gap-3">
-                              {getIcon(child.id)}
-                              <span className="font-medium">{child.label}</span>
-                            </div>
-                          </NavLink>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                    {getIcon(item.id)}
+                    <span className="font-medium">{item.label}</span>
+                  </NavLink>
                 </li>
               );
-            }
+            })}
+          </ul>
+        </nav>
 
-            // Single items (no children)
-            return (
-              <li key={item.id}>
-                <NavLink
-                  to={item.path ?? "#"}
-                  onClick={() => dispatch(setRouteName(item.id))}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                      routeName === item.id || isActive
-                        ? "bg-[#0C243D] text-white"
-                        : "text-[#E7E9EC] hover:bg-[#0C243D]"
-                    }`
-                  }
-                >
-                  {getIcon(item.id)}
-                  <span className="font-medium">{item.label}</span>
-                </NavLink>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+        {/* Logout */}
+        <div className="p-4 border-t border-gray-300">
+          <button
+            onClick={() => setShowLogoutModal(true)}
+            className="flex items-center gap-3 w-full hover:opacity-80 transition-opacity"
+          >
+            <LogOut size={20} color="#fff" />
+            <span className="text-white">Log Out</span>
+          </button>
+        </div>
+      </aside>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-gray-300 flex items-center gap-3">
-        <LogOut size={20} color="#fff" />
-        <span className="text-white">Log Out</span>
-      </div>
-    </aside>
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowLogoutModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 animate-in fade-in zoom-in duration-200">
+            {/* Close button */}
+            <button
+              onClick={() => setShowLogoutModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle size={28} className="text-red-500" />
+              </div>
+            </div>
+
+            {/* Text */}
+            <h2 className="text-center text-gray-800 text-xl font-semibold mb-2">
+              Confirm Logout
+            </h2>
+            <p className="text-center text-gray-500 text-sm mb-6">
+              Are you sure you want to log out? You will need to sign in again
+              to access your account.
+            </p>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors"
+              >
+                Yes, Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

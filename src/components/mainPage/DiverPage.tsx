@@ -187,7 +187,6 @@ const DriverDocumentModal: React.FC<DriverDocumentModalProps> = ({
   if (!open || !driver) return null;
 
   const details = detailsData?.data;
-  const status = toDriverStatus(driver.isActive);
 
   return (
     <div

@@ -21,6 +21,8 @@ export const baseApi = createApi({
     "DriverDetails",
     "Subscription",
     "Reports",
+    "Profile",
+    "Notification",
   ],
   refetchOnFocus: true, // ✅
   refetchOnReconnect: true, // ✅

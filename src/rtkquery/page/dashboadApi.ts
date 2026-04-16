@@ -13,6 +13,7 @@ export const dashboardApi = baseApi.injectEndpoints({
       query: () => ({
         url: `/admin/overview/top`,
         method: "GET",
+        providesTags: ["Profile"],
       }),
     }),
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Bell,
   Car,
@@ -6,105 +6,57 @@ import {
   XCircle,
   Clock,
   AlertCircle,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
-
-// Define types for notifications
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  type: string;
-  plan: string;
-  timestamp: string;
-  read: boolean;
-  status: string;
-}
+import type { Notification } from "../../types/notificationtype";
+import {
+  useGetNotificationsQuery,
+  useMarkAsReadMutation,
+  useGetUnseenCountQuery,
+} from "../../rtkquery/page/notificationApi";
 
 interface NotificationCardProps {
   notification: Notification;
+  onMarkRead: (id: string) => void;
+  isMarking: boolean;
 }
-
-// Mock notification data
-const notifications: Notification[] = [
-  {
-    id: 1,
-    title: "New Driver Request",
-    message: "John Doe has requested to become a driver with Premium Plan",
-    type: "driver_request",
-    plan: "Premium",
-    timestamp: "10 min ago",
-    read: false,
-    status: "pending",
-  },
-  {
-    id: 2,
-    title: "Plan Purchase",
-    message: "Sarah Smith purchased the Basic Driver Plan",
-    type: "plan_purchase",
-    plan: "Basic",
-    timestamp: "1 hour ago",
-    read: false,
-    status: "completed",
-  },
-  {
-    id: 3,
-    title: "Plan Upgrade",
-    message: "Michael Brown upgraded to Business Plan",
-    type: "plan_upgrade",
-    plan: "Business",
-    timestamp: "2 hours ago",
-    read: true,
-    status: "completed",
-  },
-  {
-    id: 4,
-    title: "Payment Failed",
-    message: "Driver registration payment failed for Robert Wilson",
-    type: "payment_failed",
-    plan: "Premium",
-    timestamp: "1 day ago",
-    read: true,
-    status: "failed",
-  },
-];
 
 const NotificationCard: React.FC<NotificationCardProps> = ({
   notification,
+  onMarkRead,
+  isMarking,
 }) => {
+  // Derive type from message text for icon selection
   const getIcon = () => {
-    switch (notification.type) {
-      case "driver_request":
-        return <Car className="w-5 h-5" />;
-      case "plan_purchase":
-        return <CheckCircle className="w-5 h-5" />;
-      case "plan_upgrade":
-        return <Bell className="w-5 h-5" />;
-      case "payment_failed":
-        return <AlertCircle className="w-5 h-5" />;
-      default:
-        return <Bell className="w-5 h-5" />;
-    }
+    const msg = notification.message.toLowerCase();
+    if (msg.includes("subscription") || msg.includes("purchase"))
+      return <Car className="w-5 h-5" />;
+    if (msg.includes("upgrade")) return <Bell className="w-5 h-5" />;
+    if (msg.includes("fail") || msg.includes("error"))
+      return <AlertCircle className="w-5 h-5" />;
+    return <CheckCircle className="w-5 h-5" />;
   };
 
-  const getStatusIcon = () => {
-    switch (notification.status) {
-      case "pending":
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-      case "completed":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case "failed":
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return null;
-    }
+  // Derive plan badge from message
+  const getPlan = (): string => {
+    const msg = notification.message.toLowerCase();
+    if (msg.includes("premium-plus")) return "Premium Plus";
+    if (msg.includes("premium")) return "Premium";
+    if (msg.includes("business")) return "Business";
+    if (msg.includes("basic")) return "Basic";
+    return "Standard";
   };
 
   const getPlanBadgeColor = () => {
-    switch (notification.plan) {
+    const plan = getPlan();
+    switch (plan) {
       case "Basic":
         return "bg-gray-100 text-gray-800";
       case "Premium":
         return "bg-blue-100 text-blue-800";
+      case "Premium Plus":
+        return "bg-indigo-100 text-indigo-800";
       case "Business":
         return "bg-purple-100 text-purple-800";
       default:
@@ -114,29 +66,39 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
 
   return (
     <div
-      className={`flex items-start p-4 border-b ${notification.read ? "bg-white" : "bg-blue-50"}`}
+      className={`flex items-start p-4 border-b transition-colors duration-200 ${
+        notification.isRead ? "bg-white" : "bg-blue-50"
+      }`}
     >
+      {/* Icon */}
       <div className="flex-shrink-0 mr-3">
         <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center`}
+          className="w-10 h-10 rounded-full flex items-center justify-center"
           style={{ backgroundColor: "#053F53", color: "white" }}
         >
           {getIcon()}
         </div>
       </div>
 
+      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
           <h4
-            className={`text-sm font-medium ${notification.read ? "text-gray-700" : "text-gray-900"}`}
+            className={`text-sm font-medium ${
+              notification.isRead ? "text-gray-700" : "text-gray-900"
+            }`}
           >
             {notification.title}
           </h4>
           <div className="flex items-center space-x-2">
             <span className="text-xs text-gray-500">
-              {notification.timestamp}
+              {notification.timeAgo}
             </span>
-            {getStatusIcon()}
+            {notification.isRead ? (
+              <CheckCircle className="w-4 h-4 text-green-500" />
+            ) : (
+              <Clock className="w-4 h-4 text-yellow-500" />
+            )}
           </div>
         </div>
 
@@ -146,21 +108,23 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
           <span
             className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadgeColor()}`}
           >
-            {notification.plan} Plan
+            {getPlan()} Plan
           </span>
 
-          {notification.type === "driver_request" && (
-            <div className="flex space-x-2">
-              <button
-                className="px-3 py-1 text-xs font-medium rounded-md text-white"
-                style={{ backgroundColor: "#053F53" }}
-              >
-                Approve
-              </button>
-              <button className="px-3 py-1 text-xs font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200">
-                Reject
-              </button>
-            </div>
+          {!notification.isRead && (
+            <button
+              onClick={() => onMarkRead(notification._id)}
+              disabled={isMarking}
+              className="px-3 py-1 text-xs font-medium rounded-md text-white flex items-center gap-1 disabled:opacity-60"
+              style={{ backgroundColor: "#053F53" }}
+            >
+              {isMarking ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <CheckCircle className="w-3 h-3" />
+              )}
+              Mark as Read
+            </button>
           )}
         </div>
       </div>
@@ -168,33 +132,49 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   );
 };
 
+// ─── Main Component ──────────────────────────────────────────────────────────
+
 export default function NotificationShow() {
-  const [notificationsList, setNotificationsList] =
-    React.useState<Notification[]>(notifications);
-  const unreadCount = notificationsList.filter((n) => !n.read).length;
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
-  const markAllAsRead = () => {
-    setNotificationsList((prev) =>
-      prev.map((notification) => ({ ...notification, read: true })),
-    );
-  };
+  // Queries
+  const {
+    data: notificationsData,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useGetNotificationsQuery({ page, limit });
 
-  const clearAll = () => {
-    setNotificationsList([]);
-  };
+  const { data: unseenData } = useGetUnseenCountQuery();
 
-  const filterByType = (type: string) => {
-    if (type === "all") {
-      setNotificationsList(notifications);
-    } else {
-      setNotificationsList(notifications.filter((n) => n.type === type));
+  // Mutation
+  const [markAsRead, { isLoading: isMarking }] = useMarkAsReadMutation();
+
+  const notifications: Notification[] = notificationsData?.data ?? [];
+  const meta = notificationsData?.meta;
+  const unseenCount = unseenData?.data?.unseenCount ?? 0;
+
+  // Count helpers
+  const subscriptionCount = notifications.filter((n) =>
+    n.message.toLowerCase().includes("subscription"),
+  ).length;
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const handleMarkRead = async (id: string) => {
+    try {
+      await markAsRead(id).unwrap();
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="mb-6" style={{ color: "#053F53" }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -212,58 +192,28 @@ export default function NotificationShow() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              {unreadCount > 0 && (
+            <div className="flex items-center space-x-3">
+              {unseenCount > 0 && (
                 <span className="px-3 py-1 text-sm font-medium rounded-full text-white bg-red-500">
-                  {unreadCount} unread
+                  {unseenCount} unseen
                 </span>
               )}
+              <button
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 text-gray-600 disabled:opacity-50"
+                title="Refresh"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
+                />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="flex items-center">
-              <div
-                className="p-2 rounded-lg mr-3"
-                style={{ backgroundColor: "#053F53", color: "white" }}
-              >
-                <Car className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Driver Requests</p>
-                <p className="text-xl font-bold" style={{ color: "#053F53" }}>
-                  {
-                    notificationsList.filter((n) => n.type === "driver_request")
-                      .length
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="flex items-center">
-              <div
-                className="p-2 rounded-lg mr-3"
-                style={{ backgroundColor: "#053F53", color: "white" }}
-              >
-                <CheckCircle className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Plan Purchases</p>
-                <p className="text-xl font-bold" style={{ color: "#053F53" }}>
-                  {
-                    notificationsList.filter((n) => n.type === "plan_purchase")
-                      .length
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4">
             <div className="flex items-center">
               <div
@@ -273,12 +223,26 @@ export default function NotificationShow() {
                 <Bell className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Plan Upgrades</p>
+                <p className="text-sm text-gray-600">Total Notifications</p>
                 <p className="text-xl font-bold" style={{ color: "#053F53" }}>
-                  {
-                    notificationsList.filter((n) => n.type === "plan_upgrade")
-                      .length
-                  }
+                  {meta?.total ?? 0}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex items-center">
+              <div
+                className="p-2 rounded-lg mr-3"
+                style={{ backgroundColor: "#053F53", color: "white" }}
+              >
+                <Car className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Subscription Requests</p>
+                <p className="text-xl font-bold" style={{ color: "#053F53" }}>
+                  {subscriptionCount}
                 </p>
               </div>
             </div>
@@ -293,91 +257,98 @@ export default function NotificationShow() {
                 <AlertCircle className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Failed Payments</p>
+                <p className="text-sm text-gray-600">Unread (This Page)</p>
                 <p className="text-xl font-bold" style={{ color: "#053F53" }}>
-                  {
-                    notificationsList.filter((n) => n.type === "payment_failed")
-                      .length
-                  }
+                  {unreadCount}
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Filters and Actions */}
+        {/* ── Notifications List ── */}
         <div className="bg-white rounded-lg shadow mb-4">
-          <div className="p-4 border-b">
-            <div className="flex flex-wrap items-center justify-between">
-              <div className="flex space-x-2 mb-2 md:mb-0">
-                <button
-                  onClick={() => filterByType("all")}
-                  className="px-4 py-2 text-sm font-medium rounded-md text-white"
-                  style={{ backgroundColor: "#053F53" }}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => filterByType("driver_request")}
-                  className="px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200"
-                >
-                  Driver Requests
-                </button>
-                <button
-                  onClick={() => filterByType("plan_purchase")}
-                  className="px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200"
-                >
-                  Plan Purchases
-                </button>
-                <button
-                  onClick={() => filterByType("payment_failed")}
-                  className="px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200"
-                >
-                  Failed Payments
-                </button>
-              </div>
-
-              <div className="flex space-x-2">
-                <button
-                  onClick={markAllAsRead}
-                  className="px-4 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
-                >
-                  Mark all as read
-                </button>
-                <button
-                  onClick={clearAll}
-                  className="px-4 py-2 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100"
-                >
-                  Clear all
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Notifications List */}
-          <div>
-            {notificationsList.length > 0 ? (
-              notificationsList.map((notification) => (
-                <NotificationCard
-                  key={notification.id}
-                  notification={notification}
-                />
-              ))
-            ) : (
-              <div className="p-8 text-center">
-                <Bell className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-1">
-                  No notifications
-                </h3>
-                <p className="text-gray-500">
-                  All caught up! No new notifications.
-                </p>
-              </div>
+          {/* List header */}
+          <div className="p-4 border-b flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-700">
+              {meta
+                ? `Showing ${notifications.length} of ${meta.total} notifications`
+                : "Notifications"}
+            </h2>
+            {isFetching && (
+              <span className="text-xs text-gray-400 flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" /> Updating...
+              </span>
             )}
           </div>
+
+          {/* States */}
+          {isLoading ? (
+            <div className="p-12 flex flex-col items-center justify-center text-gray-400">
+              <Loader2 className="w-8 h-8 animate-spin mb-3" />
+              <p className="text-sm">Loading notifications...</p>
+            </div>
+          ) : isError ? (
+            <div className="p-12 flex flex-col items-center justify-center text-red-400">
+              <XCircle className="w-10 h-10 mb-3" />
+              <p className="text-sm font-medium">
+                Failed to load notifications
+              </p>
+              <button
+                onClick={() => refetch()}
+                className="mt-3 px-4 py-2 text-sm rounded-md text-white"
+                style={{ backgroundColor: "#053F53" }}
+              >
+                Try Again
+              </button>
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="p-12 text-center">
+              <Bell className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-1">
+                No notifications
+              </h3>
+              <p className="text-gray-500">
+                All caught up! No new notifications.
+              </p>
+            </div>
+          ) : (
+            notifications.map((notification) => (
+              <NotificationCard
+                key={notification._id}
+                notification={notification}
+                onMarkRead={handleMarkRead}
+                isMarking={isMarking}
+              />
+            ))
+          )}
         </div>
 
-        {/* Legend */}
+        {/* ── Pagination ── */}
+        {meta && meta.totalPages > 1 && (
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1 || isFetching}
+              className="px-4 py-2 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-600">
+              Page {page} of {meta.totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
+              disabled={page === meta.totalPages || isFetching}
+              className="px-4 py-2 text-sm rounded-md text-white disabled:opacity-50"
+              style={{ backgroundColor: "#053F53" }}
+            >
+              Next
+            </button>
+          </div>
+        )}
+
+        {/* ── Legend ── */}
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="text-sm font-medium mb-3" style={{ color: "#053F53" }}>
             Status Legend
@@ -385,15 +356,11 @@ export default function NotificationShow() {
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center">
               <Clock className="w-4 h-4 text-yellow-500 mr-2" />
-              <span className="text-sm text-gray-600">Pending Approval</span>
+              <span className="text-sm text-gray-600">Unread</span>
             </div>
             <div className="flex items-center">
               <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-              <span className="text-sm text-gray-600">Completed</span>
-            </div>
-            <div className="flex items-center">
-              <XCircle className="w-4 h-4 text-red-500 mr-2" />
-              <span className="text-sm text-gray-600">Failed</span>
+              <span className="text-sm text-gray-600">Read</span>
             </div>
           </div>
         </div>

@@ -14,3 +14,33 @@ export interface LoginResponse {
     refreshToken: string;
   };
 }
+
+export interface sendEmailRequest {
+  email: string;
+}
+
+export interface sendEmailResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+}
+
+export interface varifyOtpRequest {
+  email: string;
+  otp: string;
+}
+export interface varifyOtpResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+}
+
+export interface setPasswordRequest {
+  email: string;
+  newPassword: string;
+}
+export interface setPasswordResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+}

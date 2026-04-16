@@ -1,18 +1,35 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSendemailMutation } from "../../rtkquery/page/authApi";
 
 const Forgetpassword: React.FC = () => {
   const navigate = useNavigate();
+  const [sendemail, { isLoading }] = useSendemailMutation();
 
   // 1. State Management
   const [email, setEmail] = useState("");
 
   // 2. Form Submission Handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Logging in with:", { email });
 
-    navigate("/OTPPage");
+    try {
+      const res = await sendemail({ email }).unwrap();
+      console.log("Email sent successfully:", res);
+      if (res.success) {
+        navigate("/OTPPage", {
+          state: { email },
+        });
+      }
+
+      // navigate only if success
+    } catch (error: any) {
+      console.error("Error sending email:", error);
+
+      // optional: show error message
+      alert(error?.data?.message || "Something went wrong");
+    }
   };
 
   return (
@@ -45,7 +62,7 @@ const Forgetpassword: React.FC = () => {
             type="submit"
             className="w-full rounded-xl bg-[#0f1d33] py-3 font-semibold text-white shadow-md transition-all hover:bg-[#0b1527] active:scale-[0.98]"
           >
-            Sent code
+            {isLoading ? "..." : "Sent code"}
           </button>
         </form>
       </div>

@@ -1,7 +1,13 @@
 import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useVarifyotpMutation } from "../../rtkquery/page/authApi";
 
 const OTPPage: React.FC = () => {
+  const location = useLocation();
+  const email = location.state?.email;
+  const [varifyOtp, { isLoading }] = useVarifyotpMutation();
+
+  console.log(email);
   const navigate = useNavigate();
   const [otp, setOtp] = useState(Array(6).fill(""));
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
@@ -22,7 +28,7 @@ const OTPPage: React.FC = () => {
   // Handle backspace
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
-    index: number
+    index: number,
   ) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       const newOtp = [...otp];
@@ -49,12 +55,32 @@ const OTPPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const otpCode = otp.join("");
     console.log("OTP submitted:", otpCode);
 
-    navigate("/ChangePasswordPage");
+    try {
+      const playload = {
+        email: email,
+        otp: otpCode,
+      };
+
+      const res = await varifyOtp(playload).unwrap();
+      console.log(" successfully:", res);
+      if (res.success) {
+        navigate("/ChangePasswordPage", {
+          state: { email },
+        });
+      }
+
+      // navigate only if success
+    } catch (error: any) {
+      console.error("Error sending email:", error);
+
+      // optional: show error message
+      alert(error?.data?.message || "Something went wrong");
+    }
   };
 
   return (
@@ -91,10 +117,10 @@ const OTPPage: React.FC = () => {
             type="submit"
             className="w-full rounded-xl bg-[#0f1d33] py-3 font-semibold text-white shadow-md transition-all hover:bg-[#0b1527] active:scale-[0.98]"
           >
-            Verify OTP
+            {isLoading ? "...." : "Verify OTP"}
           </button>
 
-          <p className="text-center text-sm text-gray-500">
+          {/* <p className="text-center text-sm text-gray-500">
             Didn't receive code?{" "}
             <button
               type="button"
@@ -102,7 +128,7 @@ const OTPPage: React.FC = () => {
             >
               Resend OTP
             </button>
-          </p>
+          </p> */}
         </form>
       </div>
     </div>

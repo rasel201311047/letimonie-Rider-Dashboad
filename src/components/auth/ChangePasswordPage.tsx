@@ -1,18 +1,23 @@
 import React, { useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+
+import { useSetPasswordMutation } from "../../rtkquery/page/authApi";
 
 const ChangePasswordPage: React.FC = () => {
+  const location = useLocation();
+  const email = location.state?.email;
+  const [changepassword, { isLoading }] = useSetPasswordMutation();
   const navigate = useNavigate();
-  const [currentPassword, setCurrentPassword] = useState("");
+  // const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [showCurrent, setShowCurrent] = useState(false);
+  // const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
@@ -20,18 +25,38 @@ const ChangePasswordPage: React.FC = () => {
       return;
     }
 
-    if (newPassword === currentPassword) {
-      alert("New password cannot be the same as current password!");
-      return;
+    // if (newPassword === currentPassword) {
+    //   alert("New password cannot be the same as current password!");
+    //   return;
+    // }
+
+    // console.log("Password updated:", { currentPassword, newPassword });
+
+    try {
+      const playload = {
+        email: email,
+        newPassword: newPassword,
+      };
+
+      const res = await changepassword(playload).unwrap();
+      console.log(" successfully:", res);
+      if (res.success) {
+        navigate("/signin");
+      }
+
+      // navigate only if success
+    } catch (error: any) {
+      console.error("Error sending email:", error);
+
+      // optional: show error message
+      alert(error?.data?.message || "Something went wrong");
     }
 
-    console.log("Password updated:", { currentPassword, newPassword });
-
     alert("Password changed successfully!");
-    setCurrentPassword("");
+    // setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
-    navigate("/dashboard");
+    // navigate("/dashboard");
   };
 
   const renderPasswordField = (
@@ -39,7 +64,7 @@ const ChangePasswordPage: React.FC = () => {
     value: string,
     setValue: React.Dispatch<React.SetStateAction<string>>,
     show: boolean,
-    setShow: React.Dispatch<React.SetStateAction<boolean>>
+    setShow: React.Dispatch<React.SetStateAction<boolean>>,
   ) => (
     <div>
       <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -80,33 +105,33 @@ const ChangePasswordPage: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {renderPasswordField(
+          {/* {renderPasswordField(
             "Current Password",
             currentPassword,
             setCurrentPassword,
             showCurrent,
-            setShowCurrent
-          )}
+            setShowCurrent,
+          )} */}
           {renderPasswordField(
             "New Password",
             newPassword,
             setNewPassword,
             showNew,
-            setShowNew
+            setShowNew,
           )}
           {renderPasswordField(
             "Confirm New Password",
             confirmPassword,
             setConfirmPassword,
             showConfirm,
-            setShowConfirm
+            setShowConfirm,
           )}
 
           <button
             type="submit"
             className="w-full rounded-xl bg-[#0f1d33] py-3 font-semibold text-white shadow-md transition-all hover:bg-[#0b1527] active:scale-[0.98]"
           >
-            Update Password
+            {isLoading ? "..." : "Update Password"}
           </button>
         </form>
       </div>

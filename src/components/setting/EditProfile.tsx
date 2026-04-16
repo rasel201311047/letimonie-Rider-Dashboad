@@ -1,16 +1,31 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import type { ChangeEvent } from "react";
 import { CameraIcon } from "@heroicons/react/24/outline";
 
+import toast from "react-hot-toast";
+import {
+  useGetProfileQuery,
+  useUpdateProfileMutation,
+  useChangePasswordMutation,
+  useChangeProfileImageMutation,
+} from "../../rtkquery/page/profileApi";
+
 export default function EditProfile() {
   const fileRef = useRef<HTMLInputElement>(null);
-
   const [section, setSection] = useState<"edit" | "password">("edit");
-  const [profile, setProfile] = useState({
-    name: "Maria",
-    role: "Admin",
-    image: "https://i.ibb.co/gbkXZ3fz/user-3.png",
-  });
+
+  /* ---------- RTK Query hooks ---------- */
+  const { data: profileData, isLoading: profileLoading } = useGetProfileQuery();
+
+  const [updateProfile, { isLoading: updatingProfile }] =
+    useUpdateProfileMutation();
+  const [changePassword, { isLoading: changingPassword }] =
+    useChangePasswordMutation();
+  const [changeProfileImage, { isLoading: uploadingImage }] =
+    useChangeProfileImageMutation();
+
+  /* ---------- Local state ---------- */
+  const [name, setName] = useState("");
 
   const [passwords, setPasswords] = useState({
     currentPassword: "",
@@ -18,22 +33,87 @@ export default function EditProfile() {
     confirmPassword: "",
   });
 
+  // Sync fetched profile name into local state
+  useEffect(() => {
+    if (profileData?.data?.name) {
+      setName(profileData.data.name);
+    }
+  }, [profileData]);
+
   /* ---------- Handlers ---------- */
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+
+  // Upload image immediately on file select
+  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const preview = URL.createObjectURL(file);
-    setProfile({ ...profile, image: preview });
+    const formData = new FormData();
+    formData.append("profile_image", file);
+
+    try {
+      const res = await changeProfileImage(formData).unwrap();
+      toast.success(res.message || "Profile image updated!");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to update image.");
+    }
   };
 
-  const handleProfileSave = () => {
-    console.log("Profile Updated:", profile);
+  // Save name update
+  const handleProfileSave = async () => {
+    if (!name.trim()) {
+      toast.error("Name cannot be empty.");
+      return;
+    }
+    try {
+      const res = await updateProfile({ fullName: name }).unwrap();
+      toast.success(res.message || "Profile updated!");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to update profile.");
+    }
   };
 
-  const handlePasswordSave = () => {
-    console.log("Password Data:", passwords);
+  // Save password change
+  const handlePasswordSave = async () => {
+    if (
+      !passwords.currentPassword ||
+      !passwords.newPassword ||
+      !passwords.confirmPassword
+    ) {
+      toast.error("Please fill in all password fields.");
+      return;
+    }
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      toast.error("New password and confirm password do not match.");
+      return;
+    }
+    try {
+      const res = await changePassword({
+        oldPassword: passwords.currentPassword,
+        newPassword: passwords.newPassword,
+      }).unwrap();
+      toast.success(res.message || "Password changed successfully!");
+      setPasswords({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to change password.");
+    }
   };
+
+  /* ---------- Derived values ---------- */
+  const avatar =
+    profileData?.data?.avatar || "https://i.ibb.co/gbkXZ3fz/user-3.png";
+  const role = profileData?.data?.role || "Admin";
+
+  if (profileLoading) {
+    return (
+      <div className="w-full min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500 text-sm">Loading profile…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-gray-50 flex flex-col items-center py-10">
@@ -41,13 +121,14 @@ export default function EditProfile() {
       <div className="w-[90%] max-w-4xl bg-[#32475B] rounded-xl py-6 px-8 flex items-center justify-center gap-6">
         <div className="relative">
           <img
-            src={profile.image}
+            src={avatar}
             alt="Profile"
             className="w-20 h-20 rounded-full object-cover border-4 border-white"
           />
           <button
             onClick={() => fileRef.current?.click()}
-            className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow"
+            disabled={uploadingImage}
+            className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow disabled:opacity-60"
           >
             <CameraIcon className="w-4 h-4 text-gray-700" />
           </button>
@@ -61,8 +142,10 @@ export default function EditProfile() {
         </div>
 
         <div>
-          <h2 className="text-white text-xl font-semibold">{profile.name}</h2>
-          <p className="text-gray-300 text-sm">{profile.role}</p>
+          <h2 className="text-white text-xl font-semibold">
+            {name || profileData?.data?.name}
+          </h2>
+          <p className="text-gray-300 text-sm capitalize">{role}</p>
         </div>
       </div>
 
@@ -103,19 +186,18 @@ export default function EditProfile() {
               </label>
               <input
                 type="text"
-                value={profile.name}
-                onChange={(e) =>
-                  setProfile({ ...profile, name: e.target.value })
-                }
-                className="w-full border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#0F172A]"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#0F172A] outline-none"
               />
             </div>
 
             <button
               onClick={handleProfileSave}
-              className="w-full bg-gradient-to-r from-[#053F53] to-[#0470949f] text-white py-2.5 rounded-md text-sm font-medium hover:opacity-90"
+              disabled={updatingProfile}
+              className="w-full bg-gradient-to-r from-[#053F53] to-[#0470949f] text-white py-2.5 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-60"
             >
-              Save Changes
+              {updatingProfile ? "Saving…" : "Save Changes"}
             </button>
           </div>
         </div>
@@ -140,7 +222,7 @@ export default function EditProfile() {
                     currentPassword: e.target.value,
                   })
                 }
-                className="w-full border rounded-md px-3 py-2 text-sm"
+                className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0F172A]"
               />
             </div>
 
@@ -154,7 +236,7 @@ export default function EditProfile() {
                 onChange={(e) =>
                   setPasswords({ ...passwords, newPassword: e.target.value })
                 }
-                className="w-full border rounded-md px-3 py-2 text-sm"
+                className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0F172A]"
               />
             </div>
 
@@ -171,15 +253,16 @@ export default function EditProfile() {
                     confirmPassword: e.target.value,
                   })
                 }
-                className="w-full border rounded-md px-3 py-2 text-sm"
+                className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0F172A]"
               />
             </div>
 
             <button
               onClick={handlePasswordSave}
-              className="w-full bg-gradient-to-r from-[#053F53] to-[#0470949f] text-white py-2.5 rounded-md text-sm font-medium hover:opacity-90"
+              disabled={changingPassword}
+              className="w-full bg-gradient-to-r from-[#053F53] to-[#0470949f] text-white py-2.5 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-60"
             >
-              Update Password
+              {changingPassword ? "Updating…" : "Update Password"}
             </button>
           </div>
         </div>

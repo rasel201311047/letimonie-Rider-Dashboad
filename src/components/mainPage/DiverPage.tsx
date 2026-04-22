@@ -23,6 +23,7 @@ import {
   useChangeDriverStatusMutation,
 } from "../../rtkquery/page/driverApi";
 import { BlockReasonModal } from "../modal/BlockReasonModal";
+import NotificationModal from "../modal/NotificationModal";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -187,6 +188,8 @@ const DriverDocumentModal: React.FC<DriverDocumentModalProps> = ({
       skip: !open || !driver,
     });
 
+  const [openNotification, setOpenNotification] = useState(false);
+
   if (!open || !driver) return null;
 
   const details = detailsData?.data;
@@ -214,12 +217,21 @@ const DriverDocumentModal: React.FC<DriverDocumentModalProps> = ({
               </span>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-          >
-            <X size={24} className="text-gray-500 hover:text-gray-700" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setOpenNotification(true)}
+              className="bg-gradient-to-br from-[#053F53] to-[#047094] text-[10px] font-bold text-white px-4 py-2 rounded-2xl"
+            >
+              Send Notification
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <X size={24} className="text-gray-500 hover:text-gray-700" />
+            </button>
+          </div>
         </div>
 
         {/* Action Banner */}
@@ -416,6 +428,11 @@ const DriverDocumentModal: React.FC<DriverDocumentModalProps> = ({
           )}
         </div>
       </div>
+
+      <NotificationModal
+        opennotification={openNotification}
+        onCloseotification={() => setOpenNotification(false)}
+      />
     </div>
   );
 };

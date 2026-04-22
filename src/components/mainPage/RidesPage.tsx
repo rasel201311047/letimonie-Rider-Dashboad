@@ -807,7 +807,7 @@ export default function RidesPage() {
                     "Driver",
                     "Route",
                     "Seats",
-                    "Revenue",
+                    "Ride Fare",
                     "Status",
                     "Actions",
                   ].map((h) => (

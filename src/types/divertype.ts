@@ -1,5 +1,10 @@
-// ─── Driver List (GET /admin/drivers) ───────────────────────────────────────
-
+export interface Subscription {
+  plan: "free" | "all-access" | "premium-plus" | "premium" | string;
+  status: "active" | "inactive" | string;
+  billingCycle: string | null;
+  expiryDate: string | null;
+  activatedAt: string | null;
+}
 export type DriverStatus = "Active" | "Blocked" | "Pending";
 export type VerificationStatus = "Verified" | "Unverified" | "Rejected";
 
@@ -20,6 +25,8 @@ export interface DriverListItem {
   isActive: boolean | null;
   isOnline: boolean;
   userId: string;
+
+  subscription: Subscription;
 }
 
 export interface DriverListMeta {

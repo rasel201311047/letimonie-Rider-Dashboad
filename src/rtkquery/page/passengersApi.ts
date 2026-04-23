@@ -5,6 +5,10 @@ import type {
   ApiResponse,
   PassengersListResponse,
 } from "../../types/passengertype";
+import type {
+  PostSubscriptionRequest,
+  PostSubscriptionResponse,
+} from "../../types/subcriptiontype";
 import { baseApi } from "../baseApi";
 
 // ─── Query Argument Types ─────────────────────────────────────────────────────
@@ -104,6 +108,18 @@ export const passengersApi = baseApi.injectEndpoints({
         { type: "Passenger" as const, id: "STATS" },
       ],
     }),
+
+    postSubscription: builder.mutation<
+      PostSubscriptionResponse,
+      PostSubscriptionRequest
+    >({
+      query: ({ userId, ...body }) => ({
+        url: `/admin/user/subscription/update/${userId}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Passenger", "Drivers"],
+    }),
   }),
 });
 
@@ -111,4 +127,5 @@ export const {
   useGetPassengersQuery,
   useGetPassengerStatsQuery,
   useChangePassengerStatusMutation,
+  usePostSubscriptionMutation,
 } = passengersApi;

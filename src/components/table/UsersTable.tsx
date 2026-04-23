@@ -4,19 +4,22 @@ import {
   useChangePassengerStatusMutation,
   useGetPassengersQuery,
   useGetPassengerStatsQuery,
+  usePostSubscriptionMutation,
 } from "../../rtkquery/page/passengersApi";
+
 // ── Types ─────────────────────────────────────────────────────────────────────
-type PlanName = "Starter" | "Pro" | "Enterprise";
-type PeriodLabel = "Monthly" | "Quarterly" | "Yearly" | "Lifetime";
+type PlanName = "free" | "premium" | "premium-plus" | "all-access";
+type PeriodLabel = "" | "monthly" | "yearly" | "Lifetime";
 type ModalType = "plan" | "period" | null;
 
 interface Period {
   label: PeriodLabel;
-  months: number | null; // null = Lifetime (no end date)
+  months: number | null;
 }
 
 interface ModalState {
   type: ModalType;
+  passengerId: string;
   plan: PlanName;
   period: Period;
   startStr: string;
@@ -24,19 +27,34 @@ interface ModalState {
 }
 
 // ── Data ──────────────────────────────────────────────────────────────────────
-const PLANS: PlanName[] = ["Starter", "Pro", "Enterprise"];
+const PLANS: PlanName[] = ["free", "premium", "premium-plus", "all-access"];
 
 const PERIODS: Period[] = [
-  { label: "Monthly", months: 1 },
-  { label: "Quarterly", months: 3 },
-  { label: "Yearly", months: 12 },
+  { label: "monthly", months: 1 },
+  { label: "yearly", months: 12 },
   { label: "Lifetime", months: null },
 ];
 
-const PLAN_COLOR: Record<PlanName, string> = {
-  Starter: "#34d399",
-  Pro: "#60a5fa",
-  Enterprise: "#f472b6",
+const PLAN_COLOR: Record<string, string> = {
+  free: "rgb(156, 163, 175)",
+  premium: "#34d399",
+  "premium-plus": "#60a5fa",
+  "all-access": "#f472b6",
+};
+
+const PLAN_PRICE: Record<string, { monthly: string; yearly: string }> = {
+  free: { monthly: "—", yearly: "—" },
+  premium: { monthly: "4 JOD", yearly: "40 JOD" },
+  "premium-plus": { monthly: "7 JOD", yearly: "70 JOD" },
+  "all-access": { monthly: "6 JOD", yearly: "60 JOD" },
+};
+
+// Numeric price values for the API body
+const PLAN_PRICE_NUM: Record<string, { monthly: number; yearly: number }> = {
+  free: { monthly: 0, yearly: 0 },
+  premium: { monthly: 4, yearly: 40 },
+  "premium-plus": { monthly: 7, yearly: 70 },
+  "all-access": { monthly: 6, yearly: 60 },
 };
 
 function toInputStr(date: Date): string {
@@ -131,7 +149,7 @@ const Avatar: React.FC<{ name: string; avatar?: string }> = ({
 
 const SkeletonRow: React.FC = () => (
   <tr className="animate-pulse">
-    {Array.from({ length: 9 }).map((_, i) => (
+    {Array.from({ length: 12 }).map((_, i) => (
       <td key={i} className="p-4">
         <div className="h-4 bg-gray-100 rounded w-3/4" />
       </td>
@@ -139,8 +157,28 @@ const SkeletonRow: React.FC = () => (
   </tr>
 );
 
-// ─── Details Modal ────────────────────────────────────────────────────────────
+// ─── Plan Badge (inline in table) ─────────────────────────────────────────────
+const PlanBadge: React.FC<{ plan: string }> = ({ plan }) => {
+  const color = PLAN_COLOR[plan] ?? "#9ca3af";
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium capitalize"
+      style={{
+        background: color + "18",
+        border: `1px solid ${color}55`,
+        color: color,
+      }}
+    >
+      <span
+        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+        style={{ background: color }}
+      />
+      {plan}
+    </span>
+  );
+};
 
+// ─── Details Modal ────────────────────────────────────────────────────────────
 const DetailsModal: React.FC<{
   passenger: Passenger | null;
   isOpen: boolean;
@@ -244,7 +282,11 @@ const DetailsModal: React.FC<{
               </p>
               <div className="mt-1">
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${passenger.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    passenger.isActive
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
                 >
                   {passenger.isActive ? "Active" : "Blocked"}
                 </span>
@@ -252,8 +294,8 @@ const DetailsModal: React.FC<{
             </div>
           </div>
 
+          {/* Notification */}
           <div>
-            {/* Notification Title */}
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-2">
                 Notification Title
@@ -261,14 +303,10 @@ const DetailsModal: React.FC<{
               <input
                 type="text"
                 placeholder="Enter notification title…"
-                // value={title}
-                // onChange={(e) => setTitle(e.target.value)}
                 className="w-full rounded-lg bg-gray-100 border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A0A0A]"
                 required
               />
             </div>
-
-            {/* Message Content */}
             <div>
               <label className="block text-sm font-medium text-gray-500 my-2">
                 Message Content
@@ -276,15 +314,10 @@ const DetailsModal: React.FC<{
               <textarea
                 rows={6}
                 placeholder="Write your notification message here…"
-                // value={message}
-                // onChange={(e) => setMessage(e.target.value)}
                 className="w-full rounded-lg bg-gray-100 border border-gray-200 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0A0A0A]"
                 required
               />
-
-              <button
-                className={`w-full py-2.5 mt-3 rounded-lg font-medium text-sm transition-colors disabled:opacity-60 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100`}
-              >
+              <button className="w-full py-2.5 mt-3 rounded-lg font-medium text-sm transition-colors bg-green-50 text-green-700 border border-green-200 hover:bg-green-100">
                 Send Notification
               </button>
             </div>
@@ -315,7 +348,6 @@ const DetailsModal: React.FC<{
 };
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
-
 const Pagination: React.FC<{
   currentPage: number;
   totalPages: number;
@@ -410,7 +442,6 @@ const Pagination: React.FC<{
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-
 export default function PassengersTable() {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -419,9 +450,10 @@ export default function PassengersTable() {
     null,
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modal, setModal] = useState<ModalState | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounce search — auto-resets page to 1 on new search
+  // Debounce search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -449,19 +481,17 @@ export default function PassengersTable() {
   const [changeStatus, { isLoading: isChangingStatus }] =
     useChangePassengerStatusMutation();
 
+  // ── Subscription mutation ──
+  const [postSubscription, { isLoading: isUpdatingSubscription }] =
+    usePostSubscriptionMutation();
+
   const passengers = passengersData?.data ?? [];
   const meta = passengersData?.meta;
-  console.log("============================================");
-  console.log(passengers);
 
   const handleToggleStatus = useCallback(
     async (userId: string, currentStatus: boolean) => {
-      // currentStatus যোগ
       try {
-        await changeStatus({
-          userId,
-          status: !currentStatus, // ← toggle করুন
-        }).unwrap();
+        await changeStatus({ userId, status: !currentStatus }).unwrap();
       } catch (e) {
         console.error("Failed to update passenger status:", e);
       }
@@ -478,42 +508,99 @@ export default function PassengersTable() {
 
   const showSkeleton = isLoading || isFetching;
 
-  // ------------------plan chenge----------------------------------------------------------------
-  const initStart = todayStr();
-  const initEnd = toInputStr(
-    calcEndDate(new Date(initStart + "T00:00:00"), PERIODS[0].months!),
-  );
+  // ── Open subscription modal seeded from passenger's own subscription data ──
+  function openModal(type: ModalType, p: Passenger): void {
+    const subPlan = (p.subscription.plan as PlanName) ?? "free";
+    const cycle = p.subscription.billingCycle ?? "";
 
-  const [plan, setPlan] = useState<PlanName>("Pro");
-  const [period, setPeriod] = useState<Period>(PERIODS[0]);
-  const [startStr, setStartStr] = useState<string>(initStart);
-  const [endStr, setEndStr] = useState<string>(initEnd);
-  const [modal, setModal] = useState<ModalState | null>(null);
+    // Free plan has no billing cycle — default period to monthly (UI hidden for free)
+    // Lifetime billingCycle === "Lifetime" → matched to PERIODS[2]
+    // Otherwise monthly / yearly matched normally
+    const matchedPeriod: Period =
+      subPlan === "free"
+        ? PERIODS[0] // UI hidden for free, value doesn't matter
+        : (PERIODS.find((pr) => pr.label === cycle) ?? PERIODS[0]);
 
-  function openModal(type: ModalType): void {
-    setModal({ type, plan, period, startStr, endStr });
+    const isLifetimePlan =
+      subPlan !== "free" && matchedPeriod.label === "Lifetime";
+
+    const start = p.subscription.activatedAt
+      ? toInputStr(new Date(p.subscription.activatedAt))
+      : todayStr();
+
+    // end date only meaningful for monthly/yearly — lifetime & free both use ""
+    const end =
+      subPlan === "free" || isLifetimePlan
+        ? ""
+        : p.subscription.expiryDate
+          ? toInputStr(new Date(p.subscription.expiryDate))
+          : matchedPeriod.months !== null
+            ? toInputStr(
+                calcEndDate(
+                  new Date(start + "T00:00:00"),
+                  matchedPeriod.months,
+                ),
+              )
+            : "";
+
+    setModal({
+      type,
+      passengerId: p.userId,
+      plan: subPlan,
+      period: matchedPeriod,
+      startStr: subPlan === "free" ? todayStr() : start,
+      endStr: end,
+    });
   }
 
   function handleModalChange(patch: Partial<ModalState>): void {
     setModal((prev) => (prev ? { ...prev, ...patch } : prev));
   }
 
-  function handleConfirm(): void {
+  // ── Confirm: build the API body and call postSubscription ──
+  async function handleConfirm(): Promise<void> {
     if (!modal) return;
-    setPlan(modal.plan);
-    setPeriod(modal.period);
-    setStartStr(modal.startStr);
-    setEndStr(modal.endStr);
-    setModal(null);
+
+    const isFree = modal.plan === "free";
+    const isLifetime = modal.period.label === "Lifetime";
+
+    // Build price number based on plan + period
+    const priceNum = isFree
+      ? 0
+      : isLifetime
+        ? (PLAN_PRICE_NUM[modal.plan]?.yearly ?? 0)
+        : modal.period.label === "monthly"
+          ? (PLAN_PRICE_NUM[modal.plan]?.monthly ?? 0)
+          : (PLAN_PRICE_NUM[modal.plan]?.yearly ?? 0);
+
+    const body = {
+      userId: modal.passengerId,
+      plan: modal.plan,
+      billingCycle: isFree
+        ? null
+        : isLifetime
+          ? "lifetime"
+          : (modal.period.label as string),
+      price: priceNum,
+      activatedAt: isFree ? null : modal.startStr || null,
+      expiryDate: isFree || isLifetime ? null : modal.endStr || null,
+    };
+    console.log("==================================");
+    console.log(body);
+
+    try {
+      await postSubscription(body).unwrap();
+      // Close only on success
+      setModal(null);
+    } catch (e) {
+      console.error("Failed to update subscription:", e);
+      // Modal stays open so the admin can retry
+    }
   }
 
   function handleClose(): void {
     setModal(null);
   }
-
-  const startDate = new Date(startStr + "T00:00:00");
-  const isLifetime = period.months === null;
-  const endDate = !isLifetime && endStr ? new Date(endStr + "T00:00:00") : null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -530,7 +617,7 @@ export default function PassengersTable() {
               </p>
             </div>
 
-            {/* Live stats from /admin/passengers/stats */}
+            {/* Live stats */}
             <div className="flex flex-wrap gap-3">
               {(
                 [
@@ -658,7 +745,7 @@ export default function PassengersTable() {
                   "Online",
                   "Plan",
                   "Subscription Period",
-                  "Plan Date",
+                  "Plan Dates",
                   "Status",
                   "Actions",
                 ].map((h) => (
@@ -676,7 +763,7 @@ export default function PassengersTable() {
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               ) : passengers.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="p-16 text-center">
+                  <td colSpan={12} className="p-16 text-center">
                     <div className="flex flex-col items-center">
                       <svg
                         className="w-14 h-14 text-gray-200 mb-4"
@@ -711,156 +798,162 @@ export default function PassengersTable() {
                   </td>
                 </tr>
               ) : (
-                passengers.map((p) => (
-                  <tr
-                    key={p.userId}
-                    className="hover:bg-gray-50 transition-colors group"
-                  >
-                    <td className="p-4 pl-8">
-                      <div className="flex items-center gap-3">
-                        <Avatar name={p.fullName} avatar={p.avatar} />
-                        <div>
-                          <div className="font-medium text-gray-900 text-sm">
-                            {p.fullName}
-                          </div>
-                          <div className="text-xs text-gray-400 font-mono">
-                            {p.accountId}
+                passengers.map((p) => {
+                  // ── Per-row subscription data (reads directly from p.subscription) ──
+                  const sub = p.subscription;
+                  // isLifetime: non-free plan with no expiry date (free users also have no
+                  // expiryDate, so we must exclude them to avoid showing "Never expires" wrongly)
+                  const isLifetime = sub.plan !== "free" && !sub.expiryDate;
+
+                  return (
+                    <tr
+                      key={p.userId}
+                      className="hover:bg-gray-50 transition-colors group"
+                    >
+                      {/* Passenger */}
+                      <td className="p-4 pl-8">
+                        <div className="flex items-center gap-3">
+                          <Avatar name={p.fullName} avatar={p.avatar} />
+                          <div>
+                            <div className="font-medium text-gray-900 text-sm">
+                              {p.fullName}
+                            </div>
+                            <div className="text-xs text-gray-400 font-mono">
+                              {p.accountId}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-gray-700">{p.email}</td>
-                    <td className="p-4 text-sm text-gray-700 whitespace-nowrap">
-                      {p.phone}
-                    </td>
-                    <td className="p-4 text-sm text-gray-700">
-                      {p.totalRides}
-                    </td>
-                    <td className="p-4">
-                      <StarRating rating={p.avgRating} />
-                    </td>
-                    <td className="p-4 text-sm text-gray-700 whitespace-nowrap">
-                      {formatDate(p.createdAt)}
-                    </td>
-                    <td className="p-4">
-                      <OnlineBadge isOnline={p.isOnline} />
-                    </td>
-                    <td className="px-5 py-5">
-                      <CellBtn onClick={() => openModal("plan")}>
-                        <span
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ background: PLAN_COLOR[plan] }}
+                      </td>
+
+                      {/* Email */}
+                      <td className="p-4 text-sm text-gray-700">{p.email}</td>
+
+                      {/* Phone */}
+                      <td className="p-4 text-sm text-gray-700 whitespace-nowrap">
+                        {p.phone ?? "—"}
+                      </td>
+
+                      {/* Rides */}
+                      <td className="p-4 text-sm text-gray-700 text-center">
+                        {p.totalRides}
+                      </td>
+
+                      {/* Rating */}
+                      <td className="p-4">
+                        <StarRating rating={p.avgRating} />
+                      </td>
+
+                      {/* Joined */}
+                      <td className="p-4 text-sm text-gray-700 whitespace-nowrap">
+                        {formatDate(p.createdAt)}
+                      </td>
+
+                      {/* Online */}
+                      <td className="p-4">
+                        <OnlineBadge isOnline={p.isOnline} />
+                      </td>
+
+                      {/* Plan — clickable, opens modal seeded from this passenger */}
+                      <td className="px-4 py-4 text-center">
+                        <CellBtn onClick={() => openModal("plan", p)}>
+                          <PlanBadge plan={sub.plan} />
+                        </CellBtn>
+                      </td>
+
+                      {/* Billing Cycle — clickable */}
+                      <td className="px-4 py-4 text-center">
+                        <CellBtn onClick={() => openModal("period", p)}>
+                          {sub.billingCycle ? (
+                            <span className="text-sm text-gray-700 capitalize">
+                              {sub.billingCycle}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-gray-400">—</span>
+                          )}
+                        </CellBtn>
+                      </td>
+
+                      {/* Plan Dates — reads from p.subscription, NOT global state */}
+                      <td className="px-4 py-4 text-center min-w-[140px]">
+                        <div className="flex flex-col gap-1 text-xs">
+                          <div className="rounded-md px-2 py-1 text-gray-500 bg-gray-50 border border-gray-100">
+                            Start:{" "}
+                            {sub.activatedAt
+                              ? formatDate(sub.activatedAt)
+                              : "—"}
+                          </div>
+                          {isLifetime ? (
+                            <div className="inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 text-amber-600 bg-amber-50 border border-amber-100">
+                              <svg
+                                width="11"
+                                height="11"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#d97706"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                              </svg>
+                              Never expires
+                            </div>
+                          ) : (
+                            <div className="rounded-md px-2 py-1 text-gray-500 bg-gray-50 border border-gray-100">
+                              End:{" "}
+                              {sub.expiryDate
+                                ? formatDate(sub.expiryDate)
+                                : "—"}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Status toggle */}
+                      <td className="p-4">
+                        <StatusBadge
+                          isActive={p.isActive}
+                          isLoading={isChangingStatus}
+                          onClick={() =>
+                            handleToggleStatus(p.userId, p.isActive)
+                          }
                         />
-                        {plan}
-                      </CellBtn>
-                    </td>
+                      </td>
 
-                    {/* Subscription Period */}
-                    <td className="px-5 py-5">
-                      <CellBtn onClick={() => openModal("period")}>
-                        {isLifetime && (
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#fbbf24"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                          </svg>
-                        )}
-                        {period.label}
-                      </CellBtn>
-                    </td>
-
-                    <td className=" py-5 text-center">
-                      <div
-                        className=" rounded-lg  py-2 text-sm text-slate-400"
-                        style={{
-                          background: "rgba(255,255,255,0.04)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                        }}
-                      >
-                        Start: {formatDate(startDate.toISOString())}
-                      </div>
-                      {isLifetime ? (
-                        <div
-                          className="inline-flex items-center gap-1.5 rounded-lg  py-2 px-1 text-sm text-amber-400"
-                          style={{
-                            background: "rgba(251,191,36,0.08)",
-                            border: "1px solid rgba(251,191,36,0.25)",
+                      {/* Details */}
+                      <td className="p-4 pr-8">
+                        <button
+                          onClick={() => {
+                            setSelectedPassenger(p);
+                            setIsModalOpen(true);
                           }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                         >
                           <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
+                            className="w-3.5 h-3.5"
                             fill="none"
-                            stroke="#fbbf24"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
                           </svg>
-                          End: Never expires
-                        </div>
-                      ) : (
-                        <div
-                          className=" rounded-lg py-2 text-sm text-slate-400"
-                          style={{
-                            background: "rgba(255,255,255,0.04)",
-                            border: "1px solid rgba(255,255,255,0.08)",
-                          }}
-                        >
-                          End:{" "}
-                          {endDate ? formatDate(endDate.toISOString()) : "—"}
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="p-4">
-                      <StatusBadge
-                        isActive={p.isActive}
-                        isLoading={isChangingStatus}
-                        onClick={() => handleToggleStatus(p.userId, p.isActive)}
-                      />
-                    </td>
-                    <td className="p-4 pr-8">
-                      <button
-                        onClick={() => {
-                          setSelectedPassenger(p);
-                          setIsModalOpen(true);
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                      >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
-                        Details
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                          Details
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -918,51 +1011,97 @@ export default function PassengersTable() {
         }}
         togglingStatus={isChangingStatus}
       />
-      {/* period chenge */}
 
+      {/* Subscription Modal */}
       {modal && (
-        <Modal
+        <SubscriptionModal
           modal={modal}
           onClose={handleClose}
           onConfirm={handleConfirm}
           onChange={handleModalChange}
+          isLoading={isUpdatingSubscription}
         />
       )}
     </div>
   );
 }
 
-// ── Modal Component ───────────────────────────────────────────────────────────
-function Modal({
+// ── Subscription Modal ────────────────────────────────────────────────────────
+function SubscriptionModal({
   modal,
   onClose,
   onConfirm,
   onChange,
+  isLoading,
 }: {
   modal: ModalState;
   onClose: () => void;
   onConfirm: () => void;
   onChange: (patch: Partial<ModalState>) => void;
+  isLoading: boolean;
 }) {
-  const isLifetime = modal.period.months === null;
+  const isLifetime =
+    modal.period.months === null && modal.period.label === "Lifetime";
+  const isFree = modal.plan === "free";
 
   function handleStartChange(s: string): void {
-    if (isLifetime) {
+    if (isLifetime || isFree) {
       onChange({ startStr: s, endStr: "" });
-    } else {
-      const end = calcEndDate(new Date(s + "T00:00:00"), modal.period.months!);
+    } else if (modal.period.months !== null) {
+      const end = calcEndDate(new Date(s + "T00:00:00"), modal.period.months);
       onChange({ startStr: s, endStr: toInputStr(end) });
     }
   }
 
   function handlePeriodSelect(p: Period): void {
-    if (p.months === null) {
+    if (p.label === "Lifetime") {
       onChange({ period: p, endStr: "" });
-    } else {
+    } else if (p.months !== null) {
       const end = calcEndDate(new Date(modal.startStr + "T00:00:00"), p.months);
       onChange({ period: p, endStr: toInputStr(end) });
     }
   }
+
+  // When plan switches to/from free, reset relevant fields
+  function handlePlanSelect(planName: PlanName): void {
+    if (planName === "free") {
+      // Downgrade to free: clear period/dates (not sent to API anyway)
+      onChange({
+        plan: planName,
+        period: PERIODS[0],
+        startStr: todayStr(),
+        endStr: "",
+      });
+    } else if (isFree) {
+      // Upgrading FROM free: default to monthly + recalculate end date
+      const defaultPeriod = PERIODS[0]; // monthly
+      const start = todayStr();
+      const end = toInputStr(
+        calcEndDate(new Date(start + "T00:00:00"), defaultPeriod.months!),
+      );
+      onChange({
+        plan: planName,
+        period: defaultPeriod,
+        startStr: start,
+        endStr: end,
+      });
+    } else {
+      // Switching between paid plans: keep period & dates, just update plan
+      onChange({ plan: planName });
+    }
+  }
+
+  // Determine price to show based on current selections
+  const priceMap = PLAN_PRICE[modal.plan] ?? { monthly: "—", yearly: "—" };
+  const priceDisplay = isFree
+    ? "Free"
+    : modal.period.label === "monthly"
+      ? priceMap.monthly
+      : modal.period.label === "yearly"
+        ? priceMap.yearly
+        : modal.plan === "free"
+          ? "Free"
+          : "0";
 
   return (
     <div
@@ -981,16 +1120,33 @@ function Modal({
           animation: "fadeUp .2s ease",
         }}
       >
-        {/* Modal Header */}
-        <div className="mb-6">
-          <p className="text-xs uppercase tracking-widest text-slate-500 mb-1">
-            Change
-          </p>
-          <h2 className="text-2xl font-light text-slate-50 tracking-tight">
-            {modal.type === "plan"
-              ? "Subscription Plan"
-              : "Subscription Period"}
-          </h2>
+        {/* Header */}
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-slate-500 mb-1">
+              Change
+            </p>
+            <h2 className="text-2xl font-light text-slate-50 tracking-tight">
+              Subscription Plan
+            </h2>
+          </div>
+          {/* Price pill */}
+          {priceDisplay && priceDisplay !== "—" && (
+            <div
+              className="mt-1 px-3 py-1.5 rounded-xl text-sm font-semibold"
+              style={{
+                background: isFree
+                  ? "rgba(156,163,175,0.15)"
+                  : "rgba(96,165,250,0.15)",
+                border: isFree
+                  ? "1px solid rgba(156,163,175,0.35)"
+                  : "1px solid rgba(96,165,250,0.35)",
+                color: isFree ? "#9ca3af" : "#60a5fa",
+              }}
+            >
+              {priceDisplay}
+            </div>
+          )}
         </div>
 
         {/* Plan selector */}
@@ -999,19 +1155,20 @@ function Modal({
             Select Plan
           </label>
           <div className="flex flex-col gap-2">
-            {PLANS.map((p) => {
-              const active = modal.plan === p;
+            {PLANS.map((planName) => {
+              const active = modal.plan === planName;
+              const color = PLAN_COLOR[planName] ?? "#9ca3af";
               return (
                 <button
-                  key={p}
-                  onClick={() => onChange({ plan: p })}
-                  className="flex items-center justify-center rounded-xl px-4 py-3 text-sm text-left transition-all duration-200"
+                  key={planName}
+                  onClick={() => handlePlanSelect(planName)}
+                  className="flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-all duration-200"
                   style={{
                     background: active
-                      ? `${PLAN_COLOR[p]}18`
+                      ? `${color}18`
                       : "rgba(255,255,255,0.03)",
-                    border: `1px solid ${active ? PLAN_COLOR[p] + "55" : "rgba(255,255,255,0.08)"}`,
-                    color: active ? PLAN_COLOR[p] : "#94a3b8",
+                    border: `1px solid ${active ? color + "55" : "rgba(255,255,255,0.08)"}`,
+                    color: active ? color : "#94a3b8",
                     fontFamily: "inherit",
                     cursor: "pointer",
                   }}
@@ -1019,131 +1176,100 @@ function Modal({
                   <span className="flex items-center gap-2">
                     <span
                       className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ background: PLAN_COLOR[p] }}
+                      style={{ background: color }}
                     />
-                    {p}
+                    <span className="capitalize">{planName}</span>
                   </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Period selector */}
-        <div className="mb-5">
-          <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2">
-            Select Period
-          </label>
-          <div className="flex flex-col gap-2">
-            {PERIODS.map((p) => {
-              const active = modal.period.label === p.label;
-              const isLife = p.months === null;
-              return (
-                <button
-                  key={p.label}
-                  onClick={() => handlePeriodSelect(p)}
-                  className="flex items-center justify-center rounded-xl px-4 py-3 text-sm text-center transition-all duration-200"
-                  style={{
-                    background: active
-                      ? isLife
-                        ? "rgba(251,191,36,0.12)"
-                        : "rgba(96,165,250,0.12)"
-                      : "rgba(255,255,255,0.03)",
-                    border: `1px solid ${
-                      active
-                        ? isLife
-                          ? "rgba(251,191,36,0.45)"
-                          : "rgba(96,165,250,0.4)"
-                        : "rgba(255,255,255,0.08)"
-                    }`,
-                    color: active
-                      ? isLife
-                        ? "#fbbf24"
-                        : "#60a5fa"
-                      : "#94a3b8",
-                    fontFamily: "inherit",
-                    cursor: "pointer",
-                  }}
-                >
-                  <span className="flex items-center text-center gap-2">
-                    {isLife && (
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke={active ? "#fbbf24" : "#64748b"}
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                      </svg>
+                  {/* Price hint per plan for this period */}
+                  {!isFree &&
+                    modal.period.label !== "Lifetime" &&
+                    planName !== "free" && (
+                      <span className="text-xs opacity-60">
+                        {modal.period.label === "monthly"
+                          ? PLAN_PRICE[planName].monthly
+                          : modal.period.label === "yearly"
+                            ? PLAN_PRICE[planName].yearly
+                            : ""}
+                      </span>
                     )}
-                    {p.label}
-                  </span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Dates */}
-        <div className="flex gap-3 mb-7">
-          <div className="flex-1">
+        {/* Period selector — hidden when free plan selected */}
+        {!isFree && (
+          <div className="mb-5">
             <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2">
-              Start Date
+              Select Period
             </label>
-            <input
-              type="date"
-              value={modal.startStr}
-              onChange={(e) => handleStartChange(e.target.value)}
-              className="w-full rounded-lg px-3 py-2 text-sm text-slate-100 outline-none transition-all"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                colorScheme: "dark",
-                fontFamily: "inherit",
-              }}
-              onFocus={(e) =>
-                (e.target.style.borderColor = "rgba(99,179,237,0.5)")
-              }
-              onBlur={(e) =>
-                (e.target.style.borderColor = "rgba(255,255,255,0.12)")
-              }
-            />
+            <div className="flex flex-col gap-2">
+              {PERIODS.map((p) => {
+                const active = modal.period.label === p.label;
+                const isLife = p.label === "Lifetime";
+                return (
+                  <button
+                    key={p.label}
+                    onClick={() => handlePeriodSelect(p)}
+                    className="flex items-center justify-center rounded-xl px-4 py-3 text-sm text-center transition-all duration-200"
+                    style={{
+                      background: active
+                        ? isLife
+                          ? "rgba(251,191,36,0.12)"
+                          : "rgba(96,165,250,0.12)"
+                        : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${
+                        active
+                          ? isLife
+                            ? "rgba(251,191,36,0.45)"
+                            : "rgba(96,165,250,0.4)"
+                          : "rgba(255,255,255,0.08)"
+                      }`,
+                      color: active
+                        ? isLife
+                          ? "#fbbf24"
+                          : "#60a5fa"
+                        : "#94a3b8",
+                      fontFamily: "inherit",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      {isLife && (
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke={active ? "#fbbf24" : "#64748b"}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                      )}
+                      <span className="capitalize">{p.label}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <div className="flex-1">
-            <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2">
-              End Date
-            </label>
-            {isLifetime ? (
-              <div
-                className="w-full rounded-lg px-3 py-2 text-sm text-amber-400 flex items-center gap-1.5"
-                style={{
-                  background: "rgba(251,191,36,0.08)",
-                  border: "1px solid rgba(251,191,36,0.25)",
-                }}
-              >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#fbbf24"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                </svg>
-                Never expires
-              </div>
-            ) : (
+        )}
+
+        {/* Dates — hidden when free plan selected */}
+        {!isFree && (
+          <div className="flex gap-3 mb-7">
+            <div className="flex-1">
+              <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2">
+                Start Date
+              </label>
               <input
                 type="date"
-                value={modal.endStr}
-                onChange={(e) => onChange({ endStr: e.target.value })}
+                value={modal.startStr}
+                onChange={(e) => handleStartChange(e.target.value)}
                 className="w-full rounded-lg px-3 py-2 text-sm text-slate-100 outline-none transition-all"
                 style={{
                   background: "rgba(255,255,255,0.05)",
@@ -1158,15 +1284,91 @@ function Modal({
                   (e.target.style.borderColor = "rgba(255,255,255,0.12)")
                 }
               />
-            )}
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2">
+                End Date
+              </label>
+              {isLifetime ? (
+                <div
+                  className="w-full rounded-lg px-3 py-2 text-sm text-amber-400 flex items-center gap-1.5"
+                  style={{
+                    background: "rgba(251,191,36,0.08)",
+                    border: "1px solid rgba(251,191,36,0.25)",
+                  }}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#fbbf24"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                  Never expires
+                </div>
+              ) : (
+                <input
+                  type="date"
+                  value={modal.endStr}
+                  onChange={(e) => onChange({ endStr: e.target.value })}
+                  className="w-full rounded-lg px-3 py-2 text-sm text-slate-100 outline-none transition-all"
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    colorScheme: "dark",
+                    fontFamily: "inherit",
+                  }}
+                  onFocus={(e) =>
+                    (e.target.style.borderColor = "rgba(99,179,237,0.5)")
+                  }
+                  onBlur={(e) =>
+                    (e.target.style.borderColor = "rgba(255,255,255,0.12)")
+                  }
+                />
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Action Buttons */}
+        {/* Free plan notice */}
+        {isFree && (
+          <div
+            className="mb-7 rounded-xl px-4 py-3 text-sm text-slate-400 flex items-center gap-2"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#64748b"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            Downgrading to free will remove all billing cycle and expiry date
+            information.
+          </div>
+        )}
+
+        {/* Actions */}
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 rounded-xl py-3 text-sm text-slate-400 transition-all duration-200 hover:text-slate-200"
+            disabled={isLoading}
+            className="flex-1 rounded-xl py-3 text-sm text-slate-400 transition-all duration-200 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: "rgba(255,255,255,0.05)",
               border: "1px solid rgba(255,255,255,0.1)",
@@ -1184,7 +1386,8 @@ function Modal({
           </button>
           <button
             onClick={onConfirm}
-            className="flex-[2] rounded-xl py-3 text-sm font-semibold uppercase tracking-wider text-white transition-opacity duration-200 hover:opacity-85"
+            disabled={isLoading}
+            className="flex-[2] rounded-xl py-3 text-sm font-semibold uppercase tracking-wider text-white transition-opacity duration-200 hover:opacity-85 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{
               background: "linear-gradient(135deg,#3b82f6,#2563eb)",
               border: "none",
@@ -1193,7 +1396,7 @@ function Modal({
               cursor: "pointer",
             }}
           >
-            Confirm Changes
+            {isLoading ? "Saving…" : "Confirm Changes"}
           </button>
         </div>
       </div>
@@ -1217,7 +1420,7 @@ function CellBtn({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#000] transition-all duration-200 group"
+      className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#000] transition-all duration-200"
       style={{
         background: "transparent",
         border: "1px solid rgba(0,0,0,0.08)",
@@ -1225,11 +1428,11 @@ function CellBtn({
         cursor: "pointer",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "rgb(5, 63, 83,0.08)";
-        e.currentTarget.style.background = "rgba(255,255,255)";
+        e.currentTarget.style.borderColor = "rgba(5,63,83,0.25)";
+        e.currentTarget.style.background = "rgba(5,63,83,0.04)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "rgb(5, 63, 83,0.08)";
+        e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
         e.currentTarget.style.background = "transparent";
       }}
     >

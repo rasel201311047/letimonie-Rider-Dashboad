@@ -1,3 +1,10 @@
+export interface Subscription {
+  plan: "free" | "all-access" | "premium-plus" | "premium" | string;
+  status: "active" | "inactive" | string;
+  billingCycle: string | null;
+  expiryDate: string | null;
+  activatedAt: string | null;
+}
 export interface Passenger {
   userId: string;
   fullName: string;
@@ -12,6 +19,7 @@ export interface Passenger {
   accountId?: string;
   isActive: boolean;
   isOnline: boolean;
+  subscription: Subscription;
 }
 
 export interface PassengerStats {

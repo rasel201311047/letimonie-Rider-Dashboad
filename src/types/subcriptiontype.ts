@@ -161,3 +161,36 @@ export interface ChangeStatusResponse {
     updatedAt: string;
   };
 }
+
+// chenge subcription
+
+// ── Subscription API Types ────────────────────────────────────────────────────
+
+export type PlanName = "free" | "premium" | "premium-plus" | "all-access";
+// export type BillingCycle = "monthly" | "yearly" | null;
+
+// PATCH /admin/user/subscription/update/:userId
+// Body sent to server
+export interface PostSubscriptionRequest {
+  userId: string; // path variable
+  plan: PlanName;
+  billingCycle: string | null;
+  price: number | null;
+  activatedAt: string | null; // ISO date string  e.g. "2026-04-23"
+  expiryDate: string | null; // ISO date string  e.g. "2027-04-23"
+}
+
+// Response data object
+export interface SubscriptionData {
+  id: string;
+  plan: PlanName;
+  status: "active" | "inactive" | "expired";
+}
+
+// Full API response
+export interface PostSubscriptionResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+  data: SubscriptionData;
+}

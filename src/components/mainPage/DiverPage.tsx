@@ -39,11 +39,11 @@ type PeriodLabel = "" | "monthly" | "yearly" | "lifetime";
 
 interface Period {
   label: PeriodLabel;
-  months: number | null; // null = Lifetime
+  months: number | null;
 }
 
 interface SubModalState {
-  passengerId: string; // userId
+  passengerId: string;
   plan: PlanName;
   period: Period;
   startStr: string;
@@ -291,6 +291,8 @@ const DriverDocumentModal: React.FC<{
   onReject: (userId: string) => void;
   isChanging: boolean;
   handlblock: (driver: DriverListItem) => void;
+  // ✅ NEW: separate handler to activate a blocked driver directly
+  handleActivate: (userId: string) => void;
 }> = ({
   open,
   driver,
@@ -299,6 +301,7 @@ const DriverDocumentModal: React.FC<{
   onReject,
   isChanging,
   handlblock,
+  handleActivate,
 }) => {
   const { data: detailsData, isLoading: detailsLoading } =
     useGetDriverDetailsQuery(driver?.driverId ?? "", {
@@ -348,7 +351,7 @@ const DriverDocumentModal: React.FC<{
           </div>
         </div>
 
-        {/* Action Banner */}
+        {/* Action Banner — Pending: show Approve + Reject */}
         {driver.isActive === null && (
           <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center justify-between flex-wrap gap-3">
@@ -387,6 +390,8 @@ const DriverDocumentModal: React.FC<{
             </div>
           </div>
         )}
+
+        {/* Action Banner — Active: show Block button (requires reason) */}
         {driver.isActive === true && (
           <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center justify-between flex-wrap gap-3">
@@ -411,18 +416,20 @@ const DriverDocumentModal: React.FC<{
             </div>
           </div>
         )}
+
+        {/* Action Banner — Blocked: show Activate button (no reason needed) */}
         {driver.isActive === false && (
           <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2">
                 <AlertCircle className="text-blue-600" size={20} />
                 <span className="font-medium text-blue-800">
-                  The driver is blocked. Do you want to approve?
+                  The driver is blocked. Do you want to activate?
                 </span>
               </div>
               <button
                 disabled={isChanging}
-                onClick={() => onApprove(driver.userId)}
+                onClick={() => handleActivate(driver.userId)}
                 className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-60"
               >
                 {isChanging ? (
@@ -430,7 +437,7 @@ const DriverDocumentModal: React.FC<{
                 ) : (
                   <UserCheck size={18} />
                 )}
-                Approve Driver
+                Activate Driver
               </button>
             </div>
           </div>
@@ -531,6 +538,7 @@ const DriverDocumentModal: React.FC<{
         </div>
       </div>
       <NotificationModal
+        userid={driver.userId}
         opennotification={openNotification}
         onCloseotification={() => setOpenNotification(false)}
       />
@@ -958,42 +966,67 @@ export default function DriverPage() {
 
   // ── Status Handlers ───────────────────────────────────────────────────────────
 
+  /**
+   * Approve a pending driver — sets isActive: true, no reason needed.
+   * Also used when activating a previously blocked driver from the doc modal.
+   */
   const handleApprove = useCallback(
     async (userId: string) => {
-      await changeStatus({ userId, status: { status: true } });
+      await changeStatus({ userId, status: { status: true, reason: "" } });
       setOpenModal(false);
     },
     [changeStatus],
   );
 
+  /**
+   * Reject a pending driver — sets isActive: false, no reason needed.
+   */
   const handleReject = useCallback(
     async (userId: string) => {
-      await changeStatus({ userId, status: { status: false } });
+      await changeStatus({ userId, status: { status: false, reason: "" } });
       setOpenModal(false);
     },
     [changeStatus],
   );
 
-  const handleToggleStatus = (driver: DriverListItem) => {
+  /**
+   * ✅ Activate a blocked driver directly — no reason needed.
+   * Called from the doc modal "Activate Driver" button and the table action button.
+   */
+  const handleActivateBlocked = useCallback(
+    async (userId: string) => {
+      await changeStatus({ userId, status: { status: true, reason: "" } });
+      setOpenModal(false);
+    },
+    [changeStatus],
+  );
+
+  /**
+   * ✅ Open block modal — only called for ACTIVE drivers.
+   * Requires a reason before confirming.
+   */
+  const handleOpenBlockModal = (driver: DriverListItem) => {
+    // Only active drivers can be blocked via this path
     if (driver.isActive === true) {
       setBlockTarget(driver);
-      return;
     }
   };
 
+  /**
+   * ✅ Confirm block with reason — called from BlockReasonModal.
+   */
   const handleBlockConfirm = async (reason: string) => {
     if (!blockTarget) return;
-    console.log(reason);
     await changeStatus({
       userId: blockTarget.userId,
-      status: { status: false },
+      status: { status: false, reason },
     });
     setBlockTarget(null);
+    setOpenModal(false);
   };
 
   // ── Subscription Handlers ─────────────────────────────────────────────────────
 
-  /** Seed the modal from a driver's actual subscription data */
   function openSubModal(driver: DriverListItem): void {
     const sub = driver.subscription;
     const subPlan = (sub.plan as PlanName) ?? "free";
@@ -1269,9 +1302,10 @@ export default function DriverPage() {
                 filteredDrivers.map((driver) => {
                   const sub = driver.subscription;
                   const isPending = driver.isActive === null;
+                  const isActive = driver.isActive === true;
+                  const isBlocked = driver.isActive === false;
                   const status = toDriverStatus(driver.isActive);
 
-                  // Determine if this driver has a lifetime sub (non-free + no expiryDate)
                   const driverIsLifetime =
                     sub.plan !== "free" && !sub.expiryDate;
 
@@ -1335,14 +1369,14 @@ export default function DriverPage() {
                         </span>
                       </td>
 
-                      {/* Plan — clickable opens subscription modal */}
+                      {/* Plan */}
                       <td className="p-4">
                         <CellBtn onClick={() => openSubModal(driver)}>
                           <PlanBadge plan={sub.plan} />
                         </CellBtn>
                       </td>
 
-                      {/* Billing Cycle — clickable */}
+                      {/* Billing Cycle */}
                       <td className="p-4">
                         <CellBtn onClick={() => openSubModal(driver)}>
                           {sub.billingCycle ? (
@@ -1355,7 +1389,7 @@ export default function DriverPage() {
                         </CellBtn>
                       </td>
 
-                      {/* Plan Dates — reads directly from driver.subscription */}
+                      {/* Plan Dates */}
                       <td className="p-4 min-w-[150px]">
                         <div className="flex flex-col gap-1 text-xs">
                           <div className="rounded-md px-2 py-1 text-gray-500 bg-gray-50 border border-gray-100">
@@ -1423,9 +1457,10 @@ export default function DriverPage() {
                         </button>
                       </td>
 
-                      {/* Actions */}
+                      {/* ✅ Actions — fixed logic */}
                       <td className="p-4 pr-6">
                         <div className="flex items-center gap-1">
+                          {/* Pending: Approve + Reject */}
                           {isPending && (
                             <>
                               <button
@@ -1454,21 +1489,35 @@ export default function DriverPage() {
                               </button>
                             </>
                           )}
-                          {!isPending && (
+
+                          {/* ✅ Active: Block button — opens BlockReasonModal (reason required) */}
+                          {isActive && (
                             <button
                               disabled={isChanging}
-                              onClick={() => handleToggleStatus(driver)}
-                              className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${status === "Active" ? "hover:bg-red-100 text-red-600" : "hover:bg-green-100 text-green-600"}`}
-                              title={
-                                status === "Active"
-                                  ? "Block Driver"
-                                  : "Activate Driver"
-                              }
+                              onClick={() => handleOpenBlockModal(driver)}
+                              className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600 disabled:opacity-50"
+                              title="Block Driver"
                             >
                               {isChanging ? (
                                 <Loader2 size={16} className="animate-spin" />
-                              ) : status === "Active" ? (
+                              ) : (
                                 <UserX size={16} />
+                              )}
+                            </button>
+                          )}
+
+                          {/* ✅ Blocked: Activate button — no reason needed, direct call */}
+                          {isBlocked && (
+                            <button
+                              disabled={isChanging}
+                              onClick={() =>
+                                handleActivateBlocked(driver.userId)
+                              }
+                              className="p-2 hover:bg-green-100 rounded-lg transition-colors text-green-600 disabled:opacity-50"
+                              title="Activate Driver"
+                            >
+                              {isChanging ? (
+                                <Loader2 size={16} className="animate-spin" />
                               ) : (
                                 <UserCheck size={16} />
                               )}
@@ -1502,10 +1551,11 @@ export default function DriverPage() {
         onApprove={handleApprove}
         onReject={handleReject}
         isChanging={isChanging}
-        handlblock={handleToggleStatus}
+        handlblock={handleOpenBlockModal}
+        handleActivate={handleActivateBlocked}
       />
 
-      {/* Block Modal */}
+      {/* Block Modal — only shown when blocking an active driver */}
       <BlockReasonModal
         open={!!blockTarget}
         driverName={blockTarget?.fullName ?? ""}

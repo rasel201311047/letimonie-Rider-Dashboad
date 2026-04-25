@@ -73,8 +73,8 @@ export interface GetDriverDetailsResponse {
 // ─── Change Status (PATCH /admin/drivers/change-status/:userId) ─────────────
 
 export interface ChangeStatusBody {
-  /** true → Active | false → Blocked  (null is NOT allowed here) */
   status: boolean;
+  reason: string;
 }
 
 export interface ChangeStatusResponse {

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
+import { useSendNotificationMutation } from "../../rtkquery/page/notificationApi";
 
 function XMarkIcon({ className }: { className?: string }) {
   return (
@@ -37,17 +39,49 @@ function BellIcon({ className }: { className?: string }) {
 }
 
 interface NotificationModalProps {
+  userid: string;
   opennotification: boolean;
   onCloseotification: () => void;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 export default function NotificationModal({
+  userid,
   opennotification,
   onCloseotification,
 }: NotificationModalProps) {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
+  const [sendNotification, { isLoading: isSending }] =
+    useSendNotificationMutation();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      audience: "specific-user" as const,
+      title,
+      message,
+      receiver: userid,
+    };
+    const toastId = toast.loading("Sending notification…");
+    console.log("Notification submitted:", { title, message });
+    console.log("For passenger:", payload);
+
+    try {
+      const res = await sendNotification(payload).unwrap();
+      toast.success(res.message || "Notification sent successfully!", {
+        id: toastId,
+      });
+      console.log("Notification API response:", res);
+      // Reset form
+      setTitle("");
+      setMessage("");
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { data?: { message?: string } })?.data?.message ||
+        "Failed to send notification.";
+      toast.error(errorMessage, { id: toastId });
+    }
+  };
   if (!opennotification) return null;
   return (
     <>
@@ -93,57 +127,58 @@ export default function NotificationModal({
               <XMarkIcon className="h-4 w-4" />
             </button>
           </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Body */}
+            <div className="px-6 py-5 space-y-5">
+              {/* ── Title ── */}
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">
+                  Notification Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter notification title…"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={80}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-[#047094] focus:outline-none focus:ring-2 focus:ring-[#047094]/20"
+                />
+                <p className="mt-1 text-right text-[11px] text-gray-300">
+                  {title.length}/80
+                </p>
+              </div>
 
-          {/* Body */}
-          <div className="px-6 py-5 space-y-5">
-            {/* ── Title ── */}
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">
-                Notification Title
-              </label>
-              <input
-                type="text"
-                placeholder="Enter notification title…"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={80}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-[#047094] focus:outline-none focus:ring-2 focus:ring-[#047094]/20"
-              />
-              <p className="mt-1 text-right text-[11px] text-gray-300">
-                {title.length}/80
-              </p>
+              {/* ── Message ── */}
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">
+                  Message Content
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="Write your notification message here…"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  maxLength={500}
+                  className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-[#047094] focus:outline-none focus:ring-2 focus:ring-[#047094]/20"
+                />
+                <p className="mt-1 text-right text-[11px] text-gray-300">
+                  {message.length}/500
+                </p>
+              </div>
             </div>
 
-            {/* ── Message ── */}
-            <div>
-              <label className="block text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">
-                Message Content
-              </label>
-              <textarea
-                rows={4}
-                placeholder="Write your notification message here…"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                maxLength={500}
-                className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-[#047094] focus:outline-none focus:ring-2 focus:ring-[#047094]/20"
-              />
-              <p className="mt-1 text-right text-[11px] text-gray-300">
-                {message.length}/500
-              </p>
+            {/* Footer */}
+            <div className="flex justify-center ">
+              <button
+                type="submit"
+                //   onClick={handleSubmit}
+                //   disabled={isSubmitDisabled}
+                className={` w-[80%] mb-4   rounded-xl bg-gradient-to-r py-2 from-[#053F53] to-[#047094]  text-sm font-medium text-white transition  }`}
+              >
+                {isSending ? "Sending..." : "Send"}
+              </button>
             </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex justify-center ">
-            <button
-              type="button"
-              //   onClick={handleSubmit}
-              //   disabled={isSubmitDisabled}
-              className={` w-[80%] mb-4   rounded-xl bg-gradient-to-r py-2 from-[#053F53] to-[#047094]  text-sm font-medium text-white transition  }`}
-            >
-              Send
-            </button>
-          </div>
+          </form>
         </div>
       </div>
 

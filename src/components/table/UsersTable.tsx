@@ -6,6 +6,8 @@ import {
   useGetPassengerStatsQuery,
   usePostSubscriptionMutation,
 } from "../../rtkquery/page/passengersApi";
+import { useSendNotificationMutation } from "../../rtkquery/page/notificationApi";
+import toast from "react-hot-toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type PlanName = "free" | "premium" | "premium-plus" | "all-access";
@@ -186,6 +188,11 @@ const DetailsModal: React.FC<{
   onToggleStatus: () => Promise<void>;
   togglingStatus: boolean;
 }> = ({ passenger, isOpen, onClose, onToggleStatus, togglingStatus }) => {
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [sendNotification, { isLoading: isSending }] =
+    useSendNotificationMutation();
+
   if (!isOpen || !passenger) return null;
 
   const joined = new Date(passenger.createdAt).toLocaleDateString("en-GB", {
@@ -193,6 +200,34 @@ const DetailsModal: React.FC<{
     month: "short",
     year: "numeric",
   });
+
+  const handleSubmit = async () => {
+    const payload = {
+      audience: "specific-user" as const,
+      title,
+      message,
+      receiver: passenger.userId,
+    };
+    const toastId = toast.loading("Sending notification…");
+    // console.log("Notification submitted:", { title, message });
+    // console.log("For passenger:", payload);
+
+    try {
+      const res = await sendNotification(payload).unwrap();
+      toast.success(res.message || "Notification sent successfully!", {
+        id: toastId,
+      });
+      // console.log("Notification API response:", res);
+      // Reset form
+      setTitle("");
+      setMessage("");
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { data?: { message?: string } })?.data?.message ||
+        "Failed to send notification.";
+      toast.error(errorMessage, { id: toastId });
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -303,10 +338,13 @@ const DetailsModal: React.FC<{
               <input
                 type="text"
                 placeholder="Enter notification title…"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 className="w-full rounded-lg bg-gray-100 border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A0A0A]"
                 required
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-500 my-2">
                 Message Content
@@ -314,11 +352,16 @@ const DetailsModal: React.FC<{
               <textarea
                 rows={6}
                 placeholder="Write your notification message here…"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 className="w-full rounded-lg bg-gray-100 border border-gray-200 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0A0A0A]"
                 required
               />
-              <button className="w-full py-2.5 mt-3 rounded-lg font-medium text-sm transition-colors bg-green-50 text-green-700 border border-green-200 hover:bg-green-100">
-                Send Notification
+              <button
+                onClick={handleSubmit}
+                className="w-full py-2.5 mt-3 rounded-lg font-medium text-sm transition-colors bg-green-50 text-green-700 border border-green-200 hover:bg-green-100"
+              >
+                {isSending ? "Sending..." : "Send Notification"}
               </button>
             </div>
           </div>

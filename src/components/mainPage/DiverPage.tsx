@@ -1304,7 +1304,7 @@ export default function DriverPage() {
                   const isPending = driver.isActive === null;
                   const isActive = driver.isActive === true;
                   const isBlocked = driver.isActive === false;
-                  const status = toDriverStatus(driver.isActive);
+                  // const status = toDriverStatus(driver.isActive);
 
                   const driverIsLifetime =
                     sub.plan !== "free" && !sub.expiryDate;

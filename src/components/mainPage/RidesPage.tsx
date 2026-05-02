@@ -201,7 +201,7 @@ const DetailsModal = ({
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-gray-50 rounded-xl p-3 text-center">
                   <p className="text-xl font-bold text-gray-900">
-                    {ride.price} JOD
+                    {ride.revenue}
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">Price/Seat</p>
                 </div>

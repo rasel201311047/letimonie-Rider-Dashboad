@@ -133,8 +133,9 @@ export default function Admin() {
           </div>
 
           {/* PROFILE */}
+
           <Link
-            to="/"
+            to="/settings/editprofile"
             className="flex items-center gap-3 hover:bg-gray-100 px-3 py-2 rounded-xl transition"
           >
             {isLoading ? (

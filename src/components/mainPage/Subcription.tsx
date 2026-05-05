@@ -389,10 +389,19 @@ const Subscription = () => {
 
   // API hooks
   const { data: activitiesData, isLoading: activitiesLoading } =
-    useGetSubscriptionActivitiesQuery();
+    useGetSubscriptionActivitiesQuery(undefined, {
+      pollingInterval: 1500,
+      refetchOnFocus: true,
+    });
 
   const { data: requestsData, isLoading: requestsLoading } =
-    useGetSubscriptionRequestsQuery({ page, limit: 10 });
+    useGetSubscriptionRequestsQuery(
+      { page, limit: 10 },
+      {
+        pollingInterval: 1500,
+        refetchOnFocus: true,
+      },
+    );
 
   const [changeStatus, { isLoading: isActioning }] =
     useChangeSubscriptionStatusMutation();

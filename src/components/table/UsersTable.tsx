@@ -51,7 +51,6 @@ const PLAN_PRICE: Record<string, { monthly: string; yearly: string }> = {
   "all-access": { monthly: "6 JOD", yearly: "60 JOD" },
 };
 
-// Numeric price values for the API body
 const PLAN_PRICE_NUM: Record<string, { monthly: number; yearly: number }> = {
   free: { monthly: 0, yearly: 0 },
   premium: { monthly: 4, yearly: 40 },
@@ -159,7 +158,6 @@ const SkeletonRow: React.FC = () => (
   </tr>
 );
 
-// ─── Plan Badge (inline in table) ─────────────────────────────────────────────
 const PlanBadge: React.FC<{ plan: string }> = ({ plan }) => {
   const color = PLAN_COLOR[plan] ?? "#9ca3af";
   return (
@@ -209,16 +207,11 @@ const DetailsModal: React.FC<{
       receiver: passenger.userId,
     };
     const toastId = toast.loading("Sending notification…");
-    // console.log("Notification submitted:", { title, message });
-    // console.log("For passenger:", payload);
-
     try {
       const res = await sendNotification(payload).unwrap();
       toast.success(res.message || "Notification sent successfully!", {
         id: toastId,
       });
-      // console.log("Notification API response:", res);
-      // Reset form
       setTitle("");
       setMessage("");
     } catch (err: unknown) {
@@ -317,11 +310,7 @@ const DetailsModal: React.FC<{
               </p>
               <div className="mt-1">
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    passenger.isActive
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${passenger.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
                 >
                   {passenger.isActive ? "Active" : "Blocked"}
                 </span>
@@ -329,7 +318,6 @@ const DetailsModal: React.FC<{
             </div>
           </div>
 
-          {/* Notification */}
           <div>
             <div>
               <label className="block text-sm font-medium text-gray-500 mb-2">
@@ -341,10 +329,8 @@ const DetailsModal: React.FC<{
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full rounded-lg bg-gray-100 border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A0A0A]"
-                required
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-500 my-2">
                 Message Content
@@ -355,7 +341,6 @@ const DetailsModal: React.FC<{
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 className="w-full rounded-lg bg-gray-100 border border-gray-200 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0A0A0A]"
-                required
               />
               <button
                 onClick={handleSubmit}
@@ -397,7 +382,8 @@ const Pagination: React.FC<{
   onPageChange: (page: number) => void;
 }> = ({ currentPage, totalPages, onPageChange }) => {
   const pages: (number | string)[] = [];
-  if (totalPages <= 5) {
+
+  if (totalPages <= 7) {
     for (let i = 1; i <= totalPages; i++) pages.push(i);
   } else {
     pages.push(1);
@@ -413,73 +399,74 @@ const Pagination: React.FC<{
   }
 
   return (
-    <div className="flex items-center justify-between mt-6">
-      <div className="text-sm text-gray-500">
-        Page {currentPage} of {totalPages}
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+    <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+      {/* Prev */}
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium text-gray-700 transition-colors"
+      >
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        Prev
+      </button>
+
+      {/* Page numbers */}
+      {pages.map((p, i) =>
+        p === "..." ? (
+          <span
+            key={`ellipsis-${i}`}
+            className="px-2 py-1 text-gray-400 text-sm select-none"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Prev
-        </button>
-        <div className="flex items-center gap-1">
-          {pages.map((p, i) =>
-            p === "..." ? (
-              <span key={`e-${i}`} className="px-2 py-1 text-gray-400 text-sm">
-                ...
-              </span>
-            ) : (
-              <button
-                key={p}
-                onClick={() => onPageChange(p as number)}
-                className={`w-9 h-9 rounded-lg text-sm transition-colors ${
-                  currentPage === p
-                    ? "bg-[#053F53] text-white"
-                    : "border border-gray-300 hover:bg-gray-50 text-gray-700"
-                }`}
-              >
-                {p}
-              </button>
-            ),
-          )}
-        </div>
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            ...
+          </span>
+        ) : (
+          <button
+            key={`page-${p}`}
+            onClick={() => onPageChange(p as number)}
+            className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+              currentPage === p
+                ? "bg-[#053F53] text-white shadow-sm"
+                : "border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+            }`}
+          >
+            {p}
+          </button>
+        ),
+      )}
+
+      {/* Next */}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium text-gray-700 transition-colors"
+      >
+        Next
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          Next
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
-      </div>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      </button>
     </div>
   );
 };
@@ -496,12 +483,12 @@ export default function PassengersTable() {
   const [modal, setModal] = useState<ModalState | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounce search
+  // Debounce search — also resets page to 1
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setDebouncedSearch(searchTerm);
-      setPage(1);
+      setPage(1); // ✅ reset to page 1 on new search
     }, 400);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -509,6 +496,7 @@ export default function PassengersTable() {
   }, [searchTerm]);
 
   // ── RTK Query ──
+  // ✅ KEY FIX: removed custom serializeQueryArgs so page changes trigger refetch
   const {
     data: passengersData,
     isLoading,
@@ -523,13 +511,12 @@ export default function PassengersTable() {
 
   const [changeStatus, { isLoading: isChangingStatus }] =
     useChangePassengerStatusMutation();
-
-  // ── Subscription mutation ──
   const [postSubscription, { isLoading: isUpdatingSubscription }] =
     usePostSubscriptionMutation();
 
   const passengers = passengersData?.data ?? [];
   const meta = passengersData?.meta;
+  const totalPages = meta?.totalPages ?? 1;
 
   const handleToggleStatus = useCallback(
     async (userId: string, currentStatus: boolean) => {
@@ -542,6 +529,17 @@ export default function PassengersTable() {
     [changeStatus],
   );
 
+  // ✅ Safe page change handler
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      if (newPage < 1 || newPage > totalPages) return;
+      setPage(newPage);
+      // Scroll to top of table
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [totalPages],
+  );
+
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -551,27 +549,18 @@ export default function PassengersTable() {
 
   const showSkeleton = isLoading || isFetching;
 
-  // ── Open subscription modal seeded from passenger's own subscription data ──
   function openModal(type: ModalType, p: Passenger): void {
     const subPlan = (p.subscription.plan as PlanName) ?? "free";
     const cycle = p.subscription.billingCycle ?? "";
-
-    // Free plan has no billing cycle — default period to monthly (UI hidden for free)
-    // Lifetime billingCycle === "Lifetime" → matched to PERIODS[2]
-    // Otherwise monthly / yearly matched normally
     const matchedPeriod: Period =
       subPlan === "free"
-        ? PERIODS[0] // UI hidden for free, value doesn't matter
+        ? PERIODS[0]
         : (PERIODS.find((pr) => pr.label === cycle) ?? PERIODS[0]);
-
     const isLifetimePlan =
       subPlan !== "free" && matchedPeriod.label === "Lifetime";
-
     const start = p.subscription.activatedAt
       ? toInputStr(new Date(p.subscription.activatedAt))
       : todayStr();
-
-    // end date only meaningful for monthly/yearly — lifetime & free both use ""
     const end =
       subPlan === "free" || isLifetimePlan
         ? ""
@@ -600,14 +589,10 @@ export default function PassengersTable() {
     setModal((prev) => (prev ? { ...prev, ...patch } : prev));
   }
 
-  // ── Confirm: build the API body and call postSubscription ──
   async function handleConfirm(): Promise<void> {
     if (!modal) return;
-
     const isFree = modal.plan === "free";
     const isLifetime = modal.period.label === "Lifetime";
-
-    // Build price number based on plan + period
     const priceNum = isFree
       ? 0
       : isLifetime
@@ -628,16 +613,14 @@ export default function PassengersTable() {
       activatedAt: isFree ? null : modal.startStr || null,
       expiryDate: isFree || isLifetime ? null : modal.endStr || null,
     };
-    console.log("==================================");
-    console.log(body);
 
     try {
       await postSubscription(body).unwrap();
-      // Close only on success
       setModal(null);
+      toast.success("Subscription updated successfully!");
     } catch (e) {
       console.error("Failed to update subscription:", e);
-      // Modal stays open so the admin can retry
+      toast.error("Failed to update subscription.");
     }
   }
 
@@ -842,10 +825,7 @@ export default function PassengersTable() {
                 </tr>
               ) : (
                 passengers.map((p) => {
-                  // ── Per-row subscription data (reads directly from p.subscription) ──
                   const sub = p.subscription;
-                  // isLifetime: non-free plan with no expiry date (free users also have no
-                  // expiryDate, so we must exclude them to avoid showing "Never expires" wrongly)
                   const isLifetime = sub.plan !== "free" && !sub.expiryDate;
 
                   return (
@@ -868,42 +848,31 @@ export default function PassengersTable() {
                         </div>
                       </td>
 
-                      {/* Email */}
                       <td className="p-4 text-sm text-gray-700">{p.email}</td>
-
-                      {/* Phone */}
                       <td className="p-4 text-sm text-gray-700 whitespace-nowrap">
                         {p.phone ?? "—"}
                       </td>
-
-                      {/* Rides */}
                       <td className="p-4 text-sm text-gray-700 text-center">
                         {p.totalRides}
                       </td>
-
-                      {/* Rating */}
                       <td className="p-4">
                         <StarRating rating={p.avgRating} />
                       </td>
-
-                      {/* Joined */}
                       <td className="p-4 text-sm text-gray-700 whitespace-nowrap">
                         {formatDate(p.createdAt)}
                       </td>
-
-                      {/* Online */}
                       <td className="p-4">
                         <OnlineBadge isOnline={p.isOnline} />
                       </td>
 
-                      {/* Plan — clickable, opens modal seeded from this passenger */}
+                      {/* Plan */}
                       <td className="px-4 py-4 text-center">
                         <CellBtn onClick={() => openModal("plan", p)}>
                           <PlanBadge plan={sub.plan} />
                         </CellBtn>
                       </td>
 
-                      {/* Billing Cycle — clickable */}
+                      {/* Billing Cycle */}
                       <td className="px-4 py-4 text-center">
                         <CellBtn onClick={() => openModal("period", p)}>
                           {sub.billingCycle ? (
@@ -916,7 +885,7 @@ export default function PassengersTable() {
                         </CellBtn>
                       </td>
 
-                      {/* Plan Dates — reads from p.subscription, NOT global state */}
+                      {/* Plan Dates */}
                       <td className="px-4 py-4 text-center min-w-[140px]">
                         <div className="flex flex-col gap-1 text-xs">
                           <div className="rounded-md px-2 py-1 text-gray-500 bg-gray-50 border border-gray-100">
@@ -952,7 +921,7 @@ export default function PassengersTable() {
                         </div>
                       </td>
 
-                      {/* Status toggle */}
+                      {/* Status */}
                       <td className="p-4">
                         <StatusBadge
                           isActive={p.isActive}
@@ -1002,41 +971,42 @@ export default function PassengersTable() {
           </table>
         </div>
 
-        {/* Footer */}
-        <div className="p-8 border-t border-gray-200">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="text-sm text-gray-600">
-              {showSkeleton ? (
-                <span className="text-gray-400">Loading...</span>
-              ) : meta ? (
-                <>
-                  Showing{" "}
-                  <span className="font-semibold">
-                    {meta.total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}
-                  </span>{" "}
-                  –{" "}
-                  <span className="font-semibold">
-                    {Math.min(page * PAGE_SIZE, meta.total)}
-                  </span>{" "}
-                  of <span className="font-semibold">{meta.total}</span>{" "}
-                  passengers
-                  {debouncedSearch && (
-                    <span className="text-gray-400">
-                      {" "}
-                      · filtered by "{debouncedSearch}"
-                    </span>
-                  )}
-                </>
-              ) : null}
-            </div>
-            {meta && meta.totalPages > 1 && !showSkeleton && (
-              <Pagination
-                currentPage={page}
-                totalPages={meta.totalPages}
-                onPageChange={setPage}
-              />
-            )}
+        {/* ✅ FIXED Footer — pagination separated from info row */}
+        <div className="px-8 py-6 border-t border-gray-200">
+          {/* Info row */}
+          <div className="text-sm text-gray-600 text-center">
+            {showSkeleton ? (
+              <span className="text-gray-400">Loading...</span>
+            ) : meta ? (
+              <>
+                Showing{" "}
+                <span className="font-semibold">
+                  {meta.total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}
+                </span>{" "}
+                –{" "}
+                <span className="font-semibold">
+                  {Math.min(page * PAGE_SIZE, meta.total)}
+                </span>{" "}
+                of <span className="font-semibold">{meta.total}</span>{" "}
+                passengers
+                {debouncedSearch && (
+                  <span className="text-gray-400">
+                    {" "}
+                    · filtered by "{debouncedSearch}"
+                  </span>
+                )}
+              </>
+            ) : null}
           </div>
+
+          {/* ✅ Pagination always shown when totalPages > 1 */}
+          {!showSkeleton && totalPages > 1 && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
         </div>
       </div>
 
@@ -1105,10 +1075,8 @@ function SubscriptionModal({
     }
   }
 
-  // When plan switches to/from free, reset relevant fields
   function handlePlanSelect(planName: PlanName): void {
     if (planName === "free") {
-      // Downgrade to free: clear period/dates (not sent to API anyway)
       onChange({
         plan: planName,
         period: PERIODS[0],
@@ -1116,8 +1084,7 @@ function SubscriptionModal({
         endStr: "",
       });
     } else if (isFree) {
-      // Upgrading FROM free: default to monthly + recalculate end date
-      const defaultPeriod = PERIODS[0]; // monthly
+      const defaultPeriod = PERIODS[0];
       const start = todayStr();
       const end = toInputStr(
         calcEndDate(new Date(start + "T00:00:00"), defaultPeriod.months!),
@@ -1129,12 +1096,10 @@ function SubscriptionModal({
         endStr: end,
       });
     } else {
-      // Switching between paid plans: keep period & dates, just update plan
       onChange({ plan: planName });
     }
   }
 
-  // Determine price to show based on current selections
   const priceMap = PLAN_PRICE[modal.plan] ?? { monthly: "—", yearly: "—" };
   const priceDisplay = isFree
     ? "Free"
@@ -1142,9 +1107,7 @@ function SubscriptionModal({
       ? priceMap.monthly
       : modal.period.label === "yearly"
         ? priceMap.yearly
-        : modal.plan === "free"
-          ? "Free"
-          : "0";
+        : "0";
 
   return (
     <div
@@ -1163,7 +1126,6 @@ function SubscriptionModal({
           animation: "fadeUp .2s ease",
         }}
       >
-        {/* Header */}
         <div className="mb-6 flex items-start justify-between">
           <div>
             <p className="text-xs uppercase tracking-widest text-slate-500 mb-1">
@@ -1173,7 +1135,6 @@ function SubscriptionModal({
               Subscription Plan
             </h2>
           </div>
-          {/* Price pill */}
           {priceDisplay && priceDisplay !== "—" && (
             <div
               className="mt-1 px-3 py-1.5 rounded-xl text-sm font-semibold"
@@ -1223,7 +1184,6 @@ function SubscriptionModal({
                     />
                     <span className="capitalize">{planName}</span>
                   </span>
-                  {/* Price hint per plan for this period */}
                   {!isFree &&
                     modal.period.label !== "Lifetime" &&
                     planName !== "free" && (
@@ -1241,7 +1201,7 @@ function SubscriptionModal({
           </div>
         </div>
 
-        {/* Period selector — hidden when free plan selected */}
+        {/* Period selector */}
         {!isFree && (
           <div className="mb-5">
             <label className="block text-xs uppercase tracking-widest text-slate-400 mb-2">
@@ -1262,13 +1222,7 @@ function SubscriptionModal({
                           ? "rgba(251,191,36,0.12)"
                           : "rgba(96,165,250,0.12)"
                         : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${
-                        active
-                          ? isLife
-                            ? "rgba(251,191,36,0.45)"
-                            : "rgba(96,165,250,0.4)"
-                          : "rgba(255,255,255,0.08)"
-                      }`,
+                      border: `1px solid ${active ? (isLife ? "rgba(251,191,36,0.45)" : "rgba(96,165,250,0.4)") : "rgba(255,255,255,0.08)"}`,
                       color: active
                         ? isLife
                           ? "#fbbf24"
@@ -1302,7 +1256,7 @@ function SubscriptionModal({
           </div>
         )}
 
-        {/* Dates — hidden when free plan selected */}
+        {/* Dates */}
         {!isFree && (
           <div className="flex gap-3 mb-7">
             <div className="flex-1">
@@ -1320,12 +1274,6 @@ function SubscriptionModal({
                   colorScheme: "dark",
                   fontFamily: "inherit",
                 }}
-                onFocus={(e) =>
-                  (e.target.style.borderColor = "rgba(99,179,237,0.5)")
-                }
-                onBlur={(e) =>
-                  (e.target.style.borderColor = "rgba(255,255,255,0.12)")
-                }
               />
             </div>
             <div className="flex-1">
@@ -1366,12 +1314,6 @@ function SubscriptionModal({
                     colorScheme: "dark",
                     fontFamily: "inherit",
                   }}
-                  onFocus={(e) =>
-                    (e.target.style.borderColor = "rgba(99,179,237,0.5)")
-                  }
-                  onBlur={(e) =>
-                    (e.target.style.borderColor = "rgba(255,255,255,0.12)")
-                  }
                 />
               )}
             </div>
@@ -1418,12 +1360,6 @@ function SubscriptionModal({
               fontFamily: "inherit",
               cursor: "pointer",
             }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = "rgba(255,255,255,0.09)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = "rgba(255,255,255,0.05)")
-            }
           >
             Cancel
           </button>
@@ -1444,10 +1380,7 @@ function SubscriptionModal({
         </div>
       </div>
 
-      <style>{`@keyframes fadeUp {
-        from { opacity: 0; transform: translateY(12px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }`}</style>
+      <style>{`@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   );
 }

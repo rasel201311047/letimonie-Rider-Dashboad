@@ -3,7 +3,8 @@ import type {
   PassengerStats,
   PaginationMeta,
   ApiResponse,
-  PassengersListResponse,
+  // PassengersListResponse,
+  RawPassengersResponse,
 } from "../../types/passengertype";
 import type {
   PostSubscriptionRequest,
@@ -38,11 +39,9 @@ export const passengersApi = baseApi.injectEndpoints({
     getPassengers: builder.query<GetPassengersResult, GetPassengersArgs>({
       query: ({ page, limit = 10, searchTerm }) => {
         const params: Record<string, string | number> = { page, limit };
-
         if (searchTerm && searchTerm.trim()) {
           params.searchTerm = searchTerm.trim();
         }
-
         return {
           url: "/admin/passengers",
           method: "GET",
@@ -50,27 +49,20 @@ export const passengersApi = baseApi.injectEndpoints({
         };
       },
 
+      // ✅ FIXED: meta and data are at ROOT level, not inside response.data
       transformResponse: (
-        response: ApiResponse<PassengersListResponse>,
+        response: RawPassengersResponse,
       ): GetPassengersResult => {
-        console.log("RAW response:", response);
-
+        console.log("FULL RAW:", JSON.stringify(response, null, 2));
         return {
-          meta: response.data?.meta,
-          data:
-            response.data?.data ??
-            (Array.isArray(response.data) ? response.data : []),
+          meta: response.meta,
+          data: response.data ?? [],
         };
       },
 
-      serializeQueryArgs: ({ queryArgs }) => ({
-        page: queryArgs.page,
-        limit: queryArgs.limit,
-        searchTerm: queryArgs.searchTerm ?? "",
-      }),
-
+      // ✅ NO serializeQueryArgs — allows page changes to trigger refetch
       providesTags: (result) =>
-        result && result.data
+        result?.data
           ? [
               ...result.data.map((item) => ({
                 type: "Passenger" as const,

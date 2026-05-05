@@ -47,3 +47,24 @@ export interface PassengersListResponse {
   meta: PaginationMeta;
   data: Passenger[];
 }
+
+export interface RawPassengersResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+  meta: PaginationMeta;
+  data: Passenger[];
+}
+
+export interface RawStatsResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+  data: PassengerStats;
+}
+
+export interface RawStatusResponse {
+  statusCode: number;
+  success: boolean;
+  data: { isActive: boolean };
+}

@@ -11,6 +11,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     queryString ? "?" + queryString : ""
   }`;
 
+  console.log("Proxying to:", targetUrl, "Method:", req.method);
+
+  const bodyData = req.body ? JSON.stringify(req.body) : null;
+
   const options: http.RequestOptions = {
     method: req.method,
     headers: {
@@ -19,15 +23,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ? { Authorization: req.headers.authorization }
         : {}),
       host: "18.140.140.211",
+      ...(bodyData ? { "Content-Length": Buffer.byteLength(bodyData) } : {}),
     },
   };
 
   return new Promise((resolve) => {
     const proxyReq = http.request(targetUrl, options, (proxyRes) => {
+      console.log("Response status:", proxyRes.statusCode);
+
       res.status(proxyRes.statusCode || 500);
 
+      // Remove problematic headers
+      const skipHeaders = ["transfer-encoding", "connection", "keep-alive"];
       Object.entries(proxyRes.headers).forEach(([key, value]) => {
-        if (value) res.setHeader(key, value);
+        if (value && !skipHeaders.includes(key.toLowerCase())) {
+          res.setHeader(key, value);
+        }
       });
 
       proxyRes.pipe(res);
@@ -35,12 +46,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     proxyReq.on("error", (err) => {
+      console.error("Proxy error:", err.message);
       res.status(500).json({ error: err.message });
       resolve(null);
     });
 
-    if (req.body) {
-      proxyReq.write(JSON.stringify(req.body));
+    if (bodyData) {
+      proxyReq.write(bodyData);
     }
 
     proxyReq.end();

@@ -26,10 +26,6 @@ import {
 } from "../../rtkquery/page/ridesApi";
 import type { RideListItem } from "../../types/ridestypes";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const PAGE_SIZE = 5;
-
 const statusConfig = {
   completed: {
     label: "Completed",
@@ -37,11 +33,17 @@ const statusConfig = {
     icon: CheckCircle,
     iconColor: "text-green-500",
   },
-  upcoming: {
-    label: "Upcoming",
+  pending: {
+    label: "Pending",
     color: "bg-yellow-100 text-yellow-800",
     icon: Calendar,
     iconColor: "text-yellow-500",
+  },
+  upcoming: {
+    label: "Upcoming",
+    color: "bg-indigo-100 text-indigo-800",
+    icon: Calendar,
+    iconColor: "text-indigo-500",
   },
   ongoing: {
     label: "Ongoing",
@@ -75,7 +77,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 const SkeletonRow = () => (
   <tr className="animate-pulse">
-    {Array.from({ length: 6 }).map((_, i) => (
+    {Array.from({ length: 7 }).map((_, i) => (
       <td key={i} className="py-4 px-6">
         <div className="h-4 bg-gray-100 rounded w-3/4" />
         {i === 0 && <div className="h-3 bg-gray-100 rounded w-1/2 mt-2" />}
@@ -559,20 +561,31 @@ export default function RidesPage() {
     isFetching,
     isError,
   } = useGetRidesQuery(
-    { page, limit: PAGE_SIZE, searchTerm: debouncedSearch || undefined },
+    { page, searchTerm: debouncedSearch || undefined },
     { refetchOnMountOrArgChange: true },
-  );
-
-  // Fetch all rides for export (no search, high limit)
-  const { data: allRidesData } = useGetRidesQuery(
-    { page: 1, limit: 1000 },
-    { skip: exportType !== "all" || !showExportOptions },
   );
 
   const rides = ridesData?.data ?? [];
   const meta = ridesData?.meta;
 
-  // Client-side status filter (applied on top of search results)
+  const PAGE_SIZE = ridesData?.meta?.limit || 0;
+  console.log(
+    "=================================================================",
+  );
+  console.log(rides);
+  // ── FIX: Deduplicate by tripId (unique identifier) ──
+  // const uniqueRides = rides.filter(
+  //   (ride, index, self) =>
+  //     index === self.findIndex((r) => r.tripId === ride.tripId),
+  // );
+
+  // Client-side status filter applied on deduplicated rides
+  // const filteredRides =
+  //   selectedStatus === "all"
+  //     ? uniqueRides
+  //     : uniqueRides.filter((r) => r.tripStatus === selectedStatus);
+
+  // ✅ REPLACE with just this one line:
   const filteredRides =
     selectedStatus === "all"
       ? rides
@@ -583,12 +596,12 @@ export default function RidesPage() {
   const handleExport = useCallback(
     (type: "pdf" | "csv") => {
       const exportData =
-        exportType === "all" ? (allRidesData?.data ?? rides) : filteredRides;
+        exportType === "all" ? (ridesData?.data ?? rides) : filteredRides;
       if (type === "pdf") generatePDF(exportData);
       else generateCSV(exportData);
       setShowExportOptions(false);
     },
-    [exportType, allRidesData, rides, filteredRides],
+    [exportType, ridesData, rides, filteredRides],
   );
 
   const formatDate = (iso: string) =>
@@ -827,7 +840,8 @@ export default function RidesPage() {
                   ))
                 ) : filteredRides.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-16 text-center">
+                    {/* ✅ Fixed: colSpan matches 7 columns */}
+                    <td colSpan={7} className="py-16 text-center">
                       <div className="flex flex-col items-center gap-3">
                         <Car className="w-12 h-12 text-gray-200" />
                         <p className="text-base font-medium text-gray-700">
@@ -850,9 +864,10 @@ export default function RidesPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredRides.map((ride) => (
+                  filteredRides.map((ride, index) => (
+                    // ✅ Fixed: use tripId + index as key — tripId is unique per trip
                     <tr
-                      key={ride.rideId}
+                      key={`${ride.tripId}-${index}`}
                       className="hover:bg-gray-50 transition-colors cursor-pointer group"
                     >
                       {/* Trip ID */}
@@ -937,12 +952,9 @@ export default function RidesPage() {
                         <StatusBadge status={ride.tripStatus} />
                       </td>
 
+                      {/* Actions */}
                       <td className="p-4 pr-8">
                         <button
-                          // onClick={() => {
-                          //   setSelectedPassenger(p);
-                          //   setIsModalOpen(true);
-                          // }}
                           onClick={() => setSelectedRideId(ride.rideId)}
                           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                         >

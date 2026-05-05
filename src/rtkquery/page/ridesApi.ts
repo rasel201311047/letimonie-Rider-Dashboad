@@ -24,8 +24,11 @@ export const ridesApi = baseApi.injectEndpoints({
 
     // ── 2. Rides List ─────────────────────────────────────────────────────────
     getRides: builder.query<GetRidesResult, GetRidesArgs>({
-      query: ({ page, limit = 5, searchTerm }) => {
-        const params: Record<string, string | number> = { page, limit };
+      query: ({ page, searchTerm }) => {
+        // ✅ Always send both page AND limit
+        const params: Record<string, string | number> = {
+          page,
+        };
         if (searchTerm && searchTerm.trim()) {
           params.searchTerm = searchTerm.trim();
         }
@@ -35,15 +38,30 @@ export const ridesApi = baseApi.injectEndpoints({
           params,
         };
       },
-      transformResponse: (response: RidesListResponse): GetRidesResult => ({
-        meta: response.meta,
-        data: response.data || [],
-      }),
-      serializeQueryArgs: ({ queryArgs }) => ({
-        page: queryArgs.page,
-        limit: queryArgs.limit ?? 5,
-        searchTerm: queryArgs.searchTerm ?? "",
-      }),
+
+      transformResponse: (response: RidesListResponse): GetRidesResult => {
+        const data = response.data || [];
+
+        // ✅ Only remove records where ALL fields are 100% identical
+        // Using full JSON stringify so truly duplicate objects are collapsed
+        // but records with even one different field (e.g. different createdAt) are kept
+        const seen = new Set<string>();
+        const uniqueData = data.filter((ride) => {
+          const key = JSON.stringify(ride);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        return {
+          meta: {
+            ...response.meta,
+            total: uniqueData.length,
+          },
+          data: uniqueData,
+        };
+      },
+
       providesTags: (result) =>
         result?.data
           ? [

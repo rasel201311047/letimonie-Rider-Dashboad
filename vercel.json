@@ -5,14 +5,14 @@
       "maxDuration": 10
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/proxy/:path*",
-      "destination": "/api/proxy/[...path]"
+      "src": "/api/proxy/(.*)",
+      "dest": "/api/proxy/[...path]"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }

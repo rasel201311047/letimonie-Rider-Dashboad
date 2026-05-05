@@ -1,7 +1,8 @@
-import { VercelRequest, VercelResponse } from "@vercel/node";
-import http from "http";
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const http = require("http");
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req: any, res: any) {
   const path = Array.isArray(req.query.path)
     ? req.query.path.join("/")
     : req.query.path || "";
@@ -15,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const bodyData = req.body ? JSON.stringify(req.body) : null;
 
-  const options: http.RequestOptions = {
+  const options = {
     method: req.method,
     headers: {
       "Content-Type": "application/json",
@@ -28,16 +29,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   };
 
   return new Promise((resolve) => {
-    const proxyReq = http.request(targetUrl, options, (proxyRes) => {
+    const proxyReq = http.request(targetUrl, options, (proxyRes: any) => {
       console.log("Response status:", proxyRes.statusCode);
 
       res.status(proxyRes.statusCode || 500);
 
-      // Remove problematic headers
       const skipHeaders = ["transfer-encoding", "connection", "keep-alive"];
       Object.entries(proxyRes.headers).forEach(([key, value]) => {
         if (value && !skipHeaders.includes(key.toLowerCase())) {
-          res.setHeader(key, value);
+          res.setHeader(key, value as string);
         }
       });
 
@@ -45,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       proxyRes.on("end", resolve);
     });
 
-    proxyReq.on("error", (err) => {
+    proxyReq.on("error", (err: any) => {
       console.error("Proxy error:", err.message);
       res.status(500).json({ error: err.message });
       resolve(null);
@@ -57,4 +57,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     proxyReq.end();
   });
-}
+};

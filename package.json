@@ -13,6 +13,7 @@
     "@heroicons/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.11.2",
     "@tailwindcss/vite": "^4.1.18",
+    "dotenv": "^17.4.2",
     "html2canvas": "^1.4.1",
     "jodit-react": "^5.2.38",
     "jspdf": "^4.0.0",
@@ -28,7 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.12.2",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",

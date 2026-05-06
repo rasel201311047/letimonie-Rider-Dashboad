@@ -947,6 +947,7 @@ export default function DriverPage() {
     useChangeDriverStatusMutation();
   const [postSubscription, { isLoading: isUpdatingSubscription }] =
     usePostSubscriptionMutation();
+  const [changingId, setChangingId] = useState<string | null>(null);
 
   // ── Derived ──────────────────────────────────────────────────────────────────
 
@@ -1465,11 +1466,14 @@ export default function DriverPage() {
                             <>
                               <button
                                 disabled={isChanging}
-                                onClick={() => handleApprove(driver.userId)}
+                                onClick={() => {
+                                  handleApprove(driver.userId);
+                                  setChangingId(driver.userId);
+                                }}
                                 className="p-2 hover:bg-green-100 rounded-lg transition-colors text-green-600 disabled:opacity-50"
                                 title="Approve"
                               >
-                                {isChanging ? (
+                                {isChanging && changingId === driver.userId ? (
                                   <Loader2 size={16} className="animate-spin" />
                                 ) : (
                                   <Check size={16} />
@@ -1477,11 +1481,14 @@ export default function DriverPage() {
                               </button>
                               <button
                                 disabled={isChanging}
-                                onClick={() => handleReject(driver.userId)}
+                                onClick={() => {
+                                  handleReject(driver.userId);
+                                  setChangingId(driver.userId);
+                                }}
                                 className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600 disabled:opacity-50"
                                 title="Reject"
                               >
-                                {isChanging ? (
+                                {isChanging && changingId === driver.userId ? (
                                   <Loader2 size={16} className="animate-spin" />
                                 ) : (
                                   <X size={16} />
@@ -1494,11 +1501,14 @@ export default function DriverPage() {
                           {isActive && (
                             <button
                               disabled={isChanging}
-                              onClick={() => handleOpenBlockModal(driver)}
+                              onClick={() => {
+                                handleOpenBlockModal(driver);
+                                setChangingId(driver.userId);
+                              }}
                               className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600 disabled:opacity-50"
                               title="Block Driver"
                             >
-                              {isChanging ? (
+                              {isChanging && changingId === driver.userId ? (
                                 <Loader2 size={16} className="animate-spin" />
                               ) : (
                                 <UserX size={16} />
@@ -1510,13 +1520,14 @@ export default function DriverPage() {
                           {isBlocked && (
                             <button
                               disabled={isChanging}
-                              onClick={() =>
-                                handleActivateBlocked(driver.userId)
-                              }
+                              onClick={() => {
+                                handleActivateBlocked(driver.userId);
+                                setChangingId(driver.userId);
+                              }}
                               className="p-2 hover:bg-green-100 rounded-lg transition-colors text-green-600 disabled:opacity-50"
                               title="Activate Driver"
                             >
-                              {isChanging ? (
+                              {isChanging && changingId === driver.userId ? (
                                 <Loader2 size={16} className="animate-spin" />
                               ) : (
                                 <UserCheck size={16} />

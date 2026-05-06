@@ -1,6 +1,7 @@
 import type {
   ActiveRidesResponse,
   DashboardStatsResponse,
+  RecentUsersResponse,
   RevenueAnalyticsResponse,
   TopOverviewResponse,
   UserGrowthResponse,
@@ -44,6 +45,13 @@ export const dashboardApi = baseApi.injectEndpoints({
         method: "GET",
       }),
     }),
+
+    getNewUser: builder.query<RecentUsersResponse, void>({
+      query: () => ({
+        url: `/admin/overview/users`,
+        method: "GET",
+      }),
+    }),
   }),
 });
 
@@ -53,4 +61,5 @@ export const {
   useGetUserGrowthQuery,
   useGetActiveRideQuery,
   useGetUserOverViewQuery,
+  useGetNewUserQuery,
 } = dashboardApi;

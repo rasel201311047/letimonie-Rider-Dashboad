@@ -3,6 +3,7 @@ import { useGetOverviewStatsQuery } from "../../rtkquery/page/dashboadApi";
 import MetricCard from "../cardcomponent/MetricCard";
 import RevenueGraph from "../cardcomponent/RevenueGraph";
 import UserGrowthGraph from "../cardcomponent/UserGrowthGraph";
+import NewUserTable from "../table/NewUserTable";
 import RidesTable from "../table/RideTable";
 
 export default function DashboardPage() {
@@ -49,6 +50,7 @@ export default function DashboardPage() {
         <UserGrowthGraph graphtext={"User growth"} />
       </div>
       <RidesTable />
+      <NewUserTable />
     </div>
   );
 }

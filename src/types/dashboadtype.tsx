@@ -76,3 +76,23 @@ export interface ActiveRidesResponse {
   message: string;
   data: ActiveRide[];
 }
+
+// recent user
+
+export interface RecentUser {
+  fullName: string;
+  avatar: string;
+  email: string;
+  phone: string;
+  accountId: string;
+  isActive: boolean | null;
+  plan: string;
+  createdAt: string;
+}
+
+export interface RecentUsersResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
+  data: RecentUser[];
+}

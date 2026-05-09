@@ -1015,11 +1015,7 @@ export default function DriverPage() {
    * Requires a reason before confirming.
    */
   const handleOpenBlockModal = (driver: DriverListItem) => {
-    // Only active drivers can be blocked via this path
-    console.log(driver);
-    if (driver.isActive === true) {
-      setBlockTarget(driver);
-    }
+    setBlockTarget(driver);
   };
 
   /**

@@ -258,11 +258,17 @@ export default function ReportShowPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data, isLoading, isError, isFetching } = useGetAllReportsQuery({
-    page,
-    limit: PAGE_SIZE,
-    searchTerm: debouncedSearch,
-  });
+  const { data, isLoading, isError, isFetching } = useGetAllReportsQuery(
+    {
+      page,
+      limit: PAGE_SIZE,
+      searchTerm: debouncedSearch,
+    },
+    {
+      pollingInterval: 15000, // ✅ 15 seconds — আলাদা options object
+      refetchOnFocus: true, // ✅ এখানে
+    },
+  );
 
   const reports: TReport[] = data?.data?.data ?? [];
   const meta = data?.data?.meta;
@@ -319,7 +325,7 @@ export default function ReportShowPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading || isFetching
+              {isLoading
                 ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
                     <SkeletonRow key={i} />
                   ))

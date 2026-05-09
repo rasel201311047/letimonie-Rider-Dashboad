@@ -1,7 +1,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useSendNotificationMutation } from "../../rtkquery/page/notificationApi";
-
+import { Toaster } from "react-hot-toast";
 function XMarkIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -79,6 +79,7 @@ export default function NotificationModal({
       const errorMessage =
         (err as { data?: { message?: string } })?.data?.message ||
         "Failed to send notification.";
+      // console.log(err?.title);
       toast.error(errorMessage, { id: toastId });
     }
   };
@@ -95,7 +96,6 @@ export default function NotificationModal({
       {/* ── Panel ── */}
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ pointerEvents: "none" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div
@@ -180,6 +180,14 @@ export default function NotificationModal({
             </div>
           </form>
         </div>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              zIndex: 9999,
+            },
+          }}
+        />
       </div>
 
       {/* ── Keyframe styles ── */}

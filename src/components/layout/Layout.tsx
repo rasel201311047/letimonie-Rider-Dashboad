@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import type { NavItem } from "../../types";
 import Sidebar from "../navigationber/Sidebar";
 import Admin from "../profile/Admin";
+import { Toaster } from "react-hot-toast";
 const Layout: React.FC = () => {
   const navItems: NavItem[] = [
     { id: "dashboard", label: "Dashboard", path: "/dashboard" },
@@ -48,6 +49,7 @@ const Layout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <Sidebar navItems={navItems} />
+      <Toaster position="top-right" />
       <div className="ml-64">
         <Admin />
         <main className="pt-[8vh] min-h-screen">

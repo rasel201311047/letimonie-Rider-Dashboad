@@ -108,6 +108,7 @@ export default function NotificationPage() {
 
     try {
       const res = await sendNotification(payload).unwrap();
+      console.log(res);
       toast.success(res.message || "Notification sent successfully!", {
         id: toastId,
       });

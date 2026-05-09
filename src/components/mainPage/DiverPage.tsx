@@ -984,7 +984,11 @@ export default function DriverPage() {
    */
   const handleReject = useCallback(
     async (userId: string) => {
-      await changeStatus({ userId, status: { status: false, reason: "" } });
+      const rejectres = await changeStatus({
+        userId,
+        status: { status: false, reason: "" },
+      });
+      console.log(rejectres);
       setOpenModal(false);
     },
     [changeStatus],
@@ -1002,12 +1006,17 @@ export default function DriverPage() {
     [changeStatus],
   );
 
+  // ✅ Pending driver reject — isActive check ছাড়া সরাসরি modal খুলবে
+  const handleOpenRejectModal = (driver: DriverListItem) => {
+    setBlockTarget(driver); // একই BlockReasonModal ব্যবহার করবে
+  };
   /**
    * ✅ Open block modal — only called for ACTIVE drivers.
    * Requires a reason before confirming.
    */
   const handleOpenBlockModal = (driver: DriverListItem) => {
     // Only active drivers can be blocked via this path
+    console.log(driver);
     if (driver.isActive === true) {
       setBlockTarget(driver);
     }
@@ -1482,7 +1491,7 @@ export default function DriverPage() {
                               <button
                                 disabled={isChanging}
                                 onClick={() => {
-                                  handleReject(driver.userId);
+                                  handleOpenRejectModal(driver);
                                   setChangingId(driver.userId);
                                 }}
                                 className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600 disabled:opacity-50"

@@ -1500,7 +1500,7 @@ export default function DriverPage() {
                               >
                                 {isChanging &&
                                 changingId === driver.userId &&
-                                dowhat === "aprove" ? (
+                                dowhat === "reject" ? (
                                   <Loader2 size={16} className="animate-spin" />
                                 ) : (
                                   <X size={16} />

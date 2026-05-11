@@ -948,6 +948,7 @@ export default function DriverPage() {
   const [postSubscription, { isLoading: isUpdatingSubscription }] =
     usePostSubscriptionMutation();
   const [changingId, setChangingId] = useState<string | null>(null);
+  const [dowhat, setDowhat] = useState<string | null>(null);
 
   // ── Derived ──────────────────────────────────────────────────────────────────
 
@@ -1474,11 +1475,14 @@ export default function DriverPage() {
                                 onClick={() => {
                                   handleApprove(driver.userId);
                                   setChangingId(driver.userId);
+                                  setDowhat("aprove");
                                 }}
                                 className="p-2 hover:bg-green-100 rounded-lg transition-colors text-green-600 disabled:opacity-50"
                                 title="Approve"
                               >
-                                {isChanging && changingId === driver.userId ? (
+                                {isChanging &&
+                                changingId === driver.userId &&
+                                dowhat === "aprove" ? (
                                   <Loader2 size={16} className="animate-spin" />
                                 ) : (
                                   <Check size={16} />
@@ -1489,11 +1493,14 @@ export default function DriverPage() {
                                 onClick={() => {
                                   handleOpenRejectModal(driver);
                                   setChangingId(driver.userId);
+                                  setDowhat("reject");
                                 }}
                                 className="p-2 hover:bg-red-100 rounded-lg transition-colors text-red-600 disabled:opacity-50"
                                 title="Reject"
                               >
-                                {isChanging && changingId === driver.userId ? (
+                                {isChanging &&
+                                changingId === driver.userId &&
+                                dowhat === "aprove" ? (
                                   <Loader2 size={16} className="animate-spin" />
                                 ) : (
                                   <X size={16} />

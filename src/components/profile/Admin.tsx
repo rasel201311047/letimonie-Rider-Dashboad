@@ -17,7 +17,7 @@ export default function Admin() {
   const getTitle = (routeName: string) => {
     switch (routeName) {
       case "dashboard":
-        return "Dashboard Default";
+        return "Dashboard ";
       case "users":
         return "Passengers Mangement";
       case "rides":
@@ -54,7 +54,7 @@ export default function Admin() {
   const getSubTitle = (routeName: string) => {
     switch (routeName) {
       case "dashboard":
-        return "dashboad/default";
+        return "dashboard/overview";
       case "users":
         return "passengers/mangement";
       case "rides":
@@ -104,10 +104,14 @@ export default function Admin() {
               <Grid size={14} />
               {(() => {
                 const subtitle = getSubTitle(routeName);
+
                 const parts = subtitle.split("/");
                 return (
                   <>
-                    <span className="text-sm text-gray-400">{parts[0]}/</span>
+                    <span className="text-sm text-gray-400">
+                      {parts[0]} /
+                      {/* {routeName != "dashboard" && <span> /</span>} */}
+                    </span>
                     <span className="text-[#053F53] font-medium">
                       {parts[1]}
                     </span>

@@ -15,6 +15,7 @@ import {
   useMarkAsReadMutation,
   useGetUnseenCountQuery,
 } from "../../rtkquery/page/notificationApi";
+import { useNavigate } from "react-router-dom";
 
 interface NotificationCardProps {
   notification: Notification;
@@ -25,8 +26,9 @@ interface NotificationCardProps {
 const NotificationCard: React.FC<NotificationCardProps> = ({
   notification,
   onMarkRead,
-  isMarking,
+  // isMarking,
 }) => {
+  const navigate = useNavigate();
   // Derive type from message text for icon selection
   const getIcon = () => {
     const msg = notification.message.toLowerCase();
@@ -38,35 +40,26 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
     return <CheckCircle className="w-5 h-5" />;
   };
 
-  // Derive plan badge from message
-  const getPlan = (): string => {
-    const msg = notification.message.toLowerCase();
-    if (msg.includes("premium-plus")) return "Premium Plus";
-    if (msg.includes("premium")) return "Premium";
-    if (msg.includes("business")) return "Business";
-    if (msg.includes("basic")) return "Basic";
-    return "Standard";
-  };
+  const handletheRoute = () => {
+    onMarkRead(notification._id);
 
-  const getPlanBadgeColor = () => {
-    const plan = getPlan();
-    switch (plan) {
-      case "Basic":
-        return "bg-gray-100 text-gray-800";
-      case "Premium":
-        return "bg-blue-100 text-blue-800";
-      case "Premium Plus":
-        return "bg-indigo-100 text-indigo-800";
-      case "Business":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+    if (notification.title === "new member signing") {
+      navigate("/dashboard");
+    } else if (notification.title === "Subscription Request") {
+      navigate("/subcription");
+    } else if (notification.title === "new driver signing") {
+      navigate("/drivers");
+    } else if (notification.title === "new report submitted") {
+      navigate("/ReportShowPage");
     }
+
+    // else → do nothing (stay on same page)
   };
 
   return (
-    <div
-      className={`flex items-start p-4 border-b transition-colors duration-200 ${
+    <button
+      onClick={handletheRoute}
+      className={`flex items-start p-4 w-full border-b border-[#d0d1d4] shadow transition-colors duration-200 ${
         notification.isRead ? "bg-white" : "bg-blue-50"
       }`}
     >
@@ -82,35 +75,35 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <h4
-            className={`text-sm font-medium ${
-              notification.isRead ? "text-gray-700" : "text-gray-900"
-            }`}
-          >
-            {notification.title}
-          </h4>
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-500">
-              {notification.timeAgo}
-            </span>
-            {notification.isRead ? (
-              <CheckCircle className="w-4 h-4 text-green-500" />
-            ) : (
-              <Clock className="w-4 h-4 text-yellow-500" />
-            )}
+        <div className="flex-col">
+          <div className="flex items-center justify-between">
+            <h4
+              className={`text-sm font-medium ${
+                notification.isRead ? "text-gray-700" : "text-gray-900"
+              }`}
+            >
+              {notification.title}
+            </h4>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-500">
+                {notification.timeAgo}
+              </span>
+              {notification.isRead ? (
+                <CheckCircle className="w-4 h-4 text-green-500" />
+              ) : (
+                <Clock className="w-4 h-4 text-yellow-500" />
+              )}
+            </div>
+          </div>
+
+          <div className="">
+            <p className="text-sm text-gray-600 text-start">
+              {notification.message}
+            </p>
           </div>
         </div>
 
-        <p className="mt-1 text-sm text-gray-600">{notification.message}</p>
-
-        <div className="mt-2 flex items-center space-x-3">
-          <span
-            className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadgeColor()}`}
-          >
-            {getPlan()} Plan
-          </span>
-
+        {/* <div className="mt-2 flex items-center space-x-3">
           {!notification.isRead && (
             <button
               onClick={() => onMarkRead(notification._id)}
@@ -126,9 +119,9 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
               Mark as Read
             </button>
           )}
-        </div>
+        </div> */}
       </div>
-    </div>
+    </button>
   );
 };
 
@@ -269,7 +262,7 @@ export default function NotificationShow() {
         {/* ── Notifications List ── */}
         <div className="bg-white rounded-lg shadow mb-4">
           {/* List header */}
-          <div className="p-4 border-b flex items-center justify-between">
+          <div className="p-4 border-b border-[#d0d1d4] flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-700">
               {meta
                 ? `Showing ${notifications.length} of ${meta.total} notifications`
